@@ -1,0 +1,67 @@
+---
+title: 원격 측정
+description: Turborepo의 익명 원격 측정에 대해 자세히 알아보세요.
+product: turborepo
+type: conceptual
+summary: Turborepo가 ​​수집하는 익명의 원격 측정 데이터와 수신 거부 방법을 이해하세요.
+---
+
+Vercel Inc.(Vercel)는 아래 설명된 대로 귀하의 Turborepo 사용에 대한 원격 측정 데이터를 수집할 수 있습니다.
+원격 측정 데이터를 통해 Turborepo 및 Vercel 플랫폼을 모니터링하고 개선할 수 있습니다.
+사용량 및 호스트 정보에 대한 익명 데이터를 수집합니다. 데이터는 광범위하게 식별하는 데 사용될 수 있습니다.
+사용자에게 영향을 미치는 문제를 해결하거나 대응합니다.
+
+원격 측정 데이터 수집은 선택 사항입니다. 원격 측정 데이터 수집을 원하지 않으면 [거부](#how-do-i-opt-out)할 수 있습니다.
+
+## 왜?
+
+원격 측정을 통해 모든 사용자에 걸쳐 Turborepo 기능 사용, 문제점 및 사용자 정의를 정확하게 측정할 수 있습니다.
+이 데이터를 통해 Turborepo를 대중에 맞게 더욱 효과적으로 맞춤화하여 지속적인 성장, 관련성 및 동급 최고의 개발자 경험을 보장할 수 있습니다.
+또한 이 데이터를 통해 개선 사항이 모든 애플리케이션의 기준을 개선하는지 확인할 수 있습니다.
+
+## 수집되는 내용
+
+당사는 일반적인 사용 정보를 추적합니다. 특히 무작위 식별자를 사용하여 익명화된 원격 측정 데이터로 다음을 추적합니다.
+
+- 호출된 명령([turbo run](/docs/reference/run), [turbo prune](/docs/reference/prune), [turbo gen](/docs/reference/generate) 등)
+- `turbo` 버전
+- 일반 시스템 정보(예: CPU 수, macOS/Windows/Linux, 명령이 CI 내에서 실행되었는지 여부)
+- 애플리케이션 크기(총 작업공간 수)
+- 우리는 민감한 데이터를 포함할 수 있는 측정항목을 **수집하지 않습니다**. 여기에는 작업 이름, 패키지 이름, 중요한 인수 또는 플래그 값, 환경 변수, 파일 경로 또는 파일 내용이 포함되지만 이에 국한되지는 않습니다.
+
+**참고**: 이 목록은 정확성을 보장하기 위해 정기적으로 감사됩니다.
+
+`TURBO_TELEMETRY_DEBUG=1` 환경 변수를 설정하면 수집되는 내용을 정확하게 볼 수 있습니다.
+
+또한 [이벤트](https://github.com/vercel/turborepo/blob/main/crates/turborepo-telemetry/src/events) 파일을 직접 탐색하여 가능한 모든 이벤트를 볼 수 있습니다.
+
+## 선택을 취소하려면 어떻게 해야 하나요?
+
+### 비활성화
+
+다음을 실행하여 선택 해제할 수 있습니다.
+
+```bash title="Terminal"
+turbo telemetry disable
+```
+
+다음 환경 변수 중 하나를 설정하여 선택 해제할 수도 있습니다.
+
+- `TURBO_TELEMETRY_DISABLED=1`
+- `DO_NOT_TRACK=1`
+
+### 상태
+
+다음을 실행하여 언제든지 원격 분석 수집 상태를 확인할 수 있습니다.
+
+```sh title="Terminal"
+turbo telemetry status
+```
+
+### 활성화
+
+프로그램에 다시 참여하려면 다음을 실행하여 원격 측정을 다시 활성화할 수 있습니다.
+
+```sh title="Terminal"
+turbo telemetry enable
+```

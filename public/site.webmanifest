@@ -1,0 +1,22 @@
+{
+  "name": "Turborepo 한국어 문서",
+  "short_name": "Turborepo Docs KO",
+  "description": "Turborepo 공식 문서의 한국어 번역본을 빠르게 탐색할 수 있는 정적 문서 사이트입니다.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#3659f3",
+  "lang": "ko-KR",
+  "icons": [
+    {
+      "src": "/images/product-icons/repo-light-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/product-icons/repo-dark-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    }
+  ]
+}

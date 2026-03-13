@@ -1,0 +1,423 @@
+---
+title: 저장소 구조화
+description: 생태계의 규칙을 사용하여 저장소를 만드는 것부터 시작하세요.
+product: turborepo
+type: guide
+summary: Turborepo가 ​​기대하는 디렉토리 구조, package.json 파일 및 잠금 파일을 사용하여 다중 패키지 작업공간을 설정하십시오.
+related:
+- /docs/crafting-your-repository/managing-dependencies
+- /docs/core-concepts/internal-packages
+- /docs/core-concepts/package-types
+---
+
+`turbo`은 여러 패키지를 하나의 저장소에 그룹화할 수 있는 JavaScript 생태계의 패키지 관리자 기능인 [Workspaces](https://vercel.com/docs/vercel-platform/glossary#workspace)를 기반으로 구축되었습니다.
+
+다음과 같은 규칙을 따르는 것이 중요합니다.
+
+- 모든 저장소 도구에 대해 이러한 규칙을 활용하세요.
+- Turborepo를 기존 저장소에 신속하고 점진적으로 채택합니다.
+
+이 가이드에서는 `turbo`의 기반을 마련할 수 있도록 다중 패키지 작업 영역(monorepo)을 설정하는 과정을 안내합니다.
+
+## 시작하기
+
+작업공간의 구조를 설정하는 것은 수동으로 수행하기에는 지루할 수 있습니다. 모노레포를 처음 사용하는 경우 유효한 작업공간 구조를 갖춘 [시작하려면 `create-turbo`을 사용](/docs/getting-started/installation)하는 것이 좋습니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+```bash title="Terminal"
+pnpm dlx create-turbo@latest
+```
+
+</Tab>
+
+<Tab value="yarn">
+```bash title="Terminal"
+yarn dlx create-turbo@latest
+```
+
+</Tab>
+
+<Tab value="npm">
+```bash title="Terminal"
+npx create-turbo@latest
+```
+
+</Tab>
+
+<Tab value="bun">
+```bash title="Terminal"
+bunx create-turbo@latest
+```
+
+</Tab>
+
+</PackageManagerTabs>
+
+그런 다음 이 가이드에 설명된 특성에 대한 저장소를 검토할 수 있습니다.
+
+## 작업공간 분석
+
+JavaScript에서 작업공간은 [단일 패키지](/docs/guides/single-package-workspaces) 또는 패키지 모음일 수 있습니다. 이 가이드에서는 흔히 '모노레포'라고 불리는 [다중 패키지 작업공간](https://vercel.com/docs/vercel-platform/glossary#monorepo)에 중점을 둘 것입니다.
+
+아래에는 유효한 작업 공간을 만드는 `create-turbo`의 구조적 요소가 강조 표시되어 있습니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+  <Files>
+    <File name="package.json" green />
+    <File name="pnpm-lock.yaml" green />
+    <File name="pnpm-workspace.yaml" green />
+    <File name="turbo.json" />
+    <Folder name="apps" defaultOpen>
+      <Folder name="docs" className="text-foreground" defaultOpen>
+        <File name="package.json" green />
+      </Folder>
+      <Folder name="web">
+        <File name="package.json" green />
+      </Folder>
+    </Folder>
+    <Folder name="packages">
+      <Folder name="ui">
+        <File name="package.json" green />
+      </Folder>
+    </Folder>
+  </Files>
+</Tab>
+
+<Tab value="yarn">
+  <Files>
+    <File name="package.json" green />
+    <File name="yarn.lock" green />
+    <File name="turbo.json" />
+    <Folder name="apps" defaultOpen>
+      <Folder name="docs" className="text-foreground" defaultOpen>
+        <File name="package.json" green />
+      </Folder>
+      <Folder name="web">
+        <File name="package.json" green />
+      </Folder>
+    </Folder>
+    <Folder name="packages">
+      <Folder name="ui">
+        <File name="package.json" green />
+      </Folder>
+    </Folder>
+  </Files>
+</Tab>
+
+<Tab value="npm">
+  <Files>
+    <File name="package.json" green />
+    <File name="package-lock.json" green />
+    <File name="turbo.json" />
+    <Folder name="apps" defaultOpen>
+      <Folder name="docs" className="text-foreground" defaultOpen>
+        <File name="package.json" green />
+      </Folder>
+      <Folder name="web">
+        <File name="package.json" green />
+      </Folder>
+    </Folder>
+    <Folder name="packages">
+      <Folder name="ui">
+        <File name="package.json" green />
+      </Folder>
+    </Folder>
+  </Files>
+</Tab>
+
+<Tab value="bun">
+  <Files>
+    <File name="package.json" green />
+    <File name="bun.lock" green />
+    <File name="turbo.json" />
+    <Folder name="apps" defaultOpen>
+      <Folder name="docs" className="text-foreground" defaultOpen>
+        <File name="package.json" green />
+      </Folder>
+      <Folder name="web">
+        <File name="package.json" green />
+      </Folder>
+    </Folder>
+    <Folder name="packages">
+      <Folder name="ui">
+        <File name="package.json" green />
+      </Folder>
+    </Folder>
+  </Files>
+</Tab>
+
+</PackageManagerTabs>
+
+### 최소 요구사항
+
+- [패키지 관리자가 설명하는 패키지](#specifying-packages-in-a-monorepo)
+- [패키지 관리자 잠금 파일](#package-manager-lockfile)
+- [루트 `package.json`](#root-packagejson)
+- [루트 `turbo.json`](#root-turbojson)
+- [각 패키지의 `package.json`](#packagejson-in-each-package)
+
+### 모노레포에서 패키지 지정하기
+
+<Steps>
+<Step>
+
+#### 패키지 디렉터리 선언
+
+먼저, 패키지 관리자는 패키지 위치를 설명해야 합니다. 패키지를 애플리케이션 및 서비스의 경우 `apps/`으로 분할하고 라이브러리 및 도구와 같은 기타 모든 것의 경우 `packages/`으로 분할하는 것이 좋습니다.
+
+<PackageManagerTabs>
+
+  <Tab value="pnpm">
+  ```json title="pnpm-workspace.yaml"
+ packages:
+  - "apps/*"
+  - "packages/*"
+ ```
+  <LinkToDocumentation href="https://pnpm.io/pnpm-workspace_yaml" text="pnpm 작업 공간 문서" />
+
+  </Tab>
+
+  <Tab value="yarn">
+  ```json title="./package.json"
+ {
+  "workspaces": [
+   "apps/*",
+   "packages/*"
+  ]
+ }
+ ```
+
+  <LinkToDocumentation href="https://yarnpkg.com/features/workspaces#how-are-workspaces-declared" text="원사 작업 공간 문서" />
+   </Tab>
+
+  <Tab value="npm">
+  ```json title="./package.json"
+ {
+  "workspaces": [
+   "apps/*",
+   "packages/*"
+  ]
+ }
+ ```
+
+  <LinkToDocumentation href="https://docs.npmjs.com/cli/v7/using-npm/workspaces#defining-workspaces" text="npm 작업공간 문서" />
+  </Tab>
+
+  <Tab value="bun">
+  ```json title="./package.json"
+ {
+  "workspaces": [
+   "apps/*",
+   "packages/*"
+  ]
+ }
+ ```
+
+  <LinkToDocumentation href="https://bun.sh/docs/install/workspaces" text="롤빵 작업 공간 문서" />
+  </Tab>
+
+</PackageManagerTabs>
+
+이 구성을 사용하면 `apps` 또는 `packages` 디렉터리에 **@P0@@**이 있는 모든 디렉터리가 패키지로 간주됩니다.
+
+<Callout type="error">
+Turborepo는 JavaScript 생태계의 패키지 관리자 간의 모호한 동작으로 인해 `apps/**` 또는 `packages/**`과 같은 중첩 패키지를 지원하지 않습니다. `apps/a`에 패키지를 배치하고 `apps/a/b`에 다른 패키지를 배치하는 구조를 사용하면 오류가 발생합니다.
+
+패키지를 디렉터리별로 그룹화하려면 `packages/*` 및 `packages/group/*`과 같은 glob을 사용하여 수행할 수 있으며 `packages/group/package.json` 파일을 **만드는 것이 아닙니다**.
+
+</Callout>
+</Step>
+
+<Step>
+
+#### `package.json` 각 패키지에 포함
+
+패키지 관리자와 `turbo`이 패키지를 검색할 수 있도록 하려면 패키지 디렉터리에 `package.json`이 있어야 합니다. [패키지의 `package.json` 요구 사항](#anatomy-of-a-package)은 다음과 같습니다.
+
+</Step>
+</Steps>
+
+### 루트 `package.json`
+
+루트 `package.json`은 작업공간의 기반입니다. 다음은 루트 `package.json`에서 찾을 수 있는 일반적인 예입니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```json title="./package.json"
+{
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```json title="./package.json"
+{
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  },
+  "packageManager": "yarn@1.22.19",
+  "workspaces": ["apps/*", "packages/*"]
+}
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```json title="./package.json"
+{
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  },
+  "packageManager": "npm@10.0.0",
+  "workspaces": ["apps/*", "packages/*"]
+}
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```json title="./package.json"
+{
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  },
+  "packageManager": "bun@1.2.0",
+  "workspaces": ["apps/*", "packages/*"]
+}
+```
+
+</Tab>
+</PackageManagerTabs>
+
+### 루트 `turbo.json`
+
+`turbo.json`은 `turbo`의 동작을 구성하는 데 사용됩니다. 작업을 구성하는 방법에 대해 자세히 알아보려면 [작업 구성](/docs/crafting-your-repository/configuring-tasks) 페이지를 방문하세요.
+
+### 패키지 관리자 잠금 파일
+
+잠금 파일은 패키지 관리자와 `turbo` 모두의 재현 가능한 동작에 핵심입니다. 또한 Turborepo는 잠금 파일을 사용하여 작업공간 내 [내부 패키지](/docs/core-concepts/internal-packages) 간의 종속성을 이해합니다.
+
+<Callout type="warn">
+  `turbo`을 실행할 때 잠금 파일이 없으면 다음과 같은 메시지가 나타날 수 있습니다.
+ 예측할 수 없는 행동.
+</Callout>
+
+## 패키지 분석
+
+작업공간 내에서 패키지를 자체 단위로 디자인하는 것에 대해 생각하는 것이 가장 좋은 경우가 많습니다. 상위 수준에서 각 패키지는 자체 `package.json`, 도구 구성 및 소스 코드를 포함하는 자체 소규모 "프로젝트"와 거의 같습니다. 이 아이디어에는 한계가 있지만 시작하기에 좋은 정신 모델입니다.
+
+또한 패키지에는 작업공간의 다른 패키지가 패키지에 액세스하는 데 사용할 수 있는 특정 진입점이 있으며, 이는 [`exports`](#exports)로 지정됩니다.
+
+### `package.json` 패키지의 경우
+
+#### `name`
+
+[`name` 필드](https://nodejs.org/api/packages.html#name)는 패키지를 식별하는 데 사용됩니다. 작업공간 내에서 고유해야 합니다.
+
+<Callout type="info">
+npm 레지스트리의 다른 패키지와의 충돌을 방지하려면 [내부 패키지](/docs/core-concepts/internal-packages)에 네임스페이스 접두사를 사용하는 것이 가장 좋습니다. 예를 들어 조직 이름이 `acme`인 경우 패키지 이름을 `@acme/package-name`로 지정할 수 있습니다.
+
+우리 문서와 예제에서는 `@repo`을 사용합니다. 이는 npm 레지스트리에서 사용되지 않고 소유권을 주장할 수 없는 네임스페이스이기 때문입니다. 이를 유지하거나 고유한 접두사를 사용하도록 선택할 수 있습니다.
+
+</Callout>
+
+#### `scripts`
+
+`scripts` 필드는 패키지의 컨텍스트에서 실행할 수 있는 스크립트를 정의하는 데 사용됩니다. Turborepo는 이러한 스크립트의 이름을 사용하여 패키지에서 실행할 스크립트(있는 경우)를 식별합니다. [작업 실행](/docs/crafting-your-repository/running-tasks) 페이지에서 이러한 스크립트에 대해 자세히 설명합니다.
+
+#### `exports`
+
+[`exports` 필드](https://nodejs.org/api/packages.html#exports)는 패키지를 사용하려는 다른 패키지의 진입점을 지정하는 데 사용됩니다. 한 패키지의 코드를 다른 패키지에서 사용하려는 경우 해당 진입점에서 가져옵니다.
+
+예를 들어 `@repo/math` 패키지가 있는 경우 다음 `exports` 필드가 있을 수 있습니다.
+
+```json title="./packages/math/package.json"
+{
+  "exports": {
+    ".": "./src/constants.ts",
+    "./add": "./src/add.ts",
+    "./subtract": "./src/subtract.ts"
+  }
+}
+```
+
+이 예에서는 단순화를 위해 [Just-in-Time 패키지](/docs/core-concepts/internal-packages#just-in-time-packages) 패턴을 사용합니다. TypeScript를 직접 내보내지만 대신 [컴파일된 패키지](/docs/core-concepts/internal-packages#compiled-packages) 패턴을 사용하도록 선택할 수도 있습니다.
+
+<Callout type="info">
+  이 예의 `exports` 필드에는 최신 버전의 Node.js가 필요하며
+ TypeScript.
+</Callout>
+
+이렇게 하면 `@repo/math` 패키지에서 `add` 및 `subtract` 함수를 다음과 같이 가져올 수 있습니다.
+
+```ts title="./apps/my-app/src/index.ts"
+import { GRAVITATIONAL_CONSTANT, SPEED_OF_LIGHT } from "@repo/math";
+import { add } from "@repo/math/add";
+import { subtract } from "@repo/math/subtract";
+```
+
+이러한 방식으로 내보내기를 사용하면 다음과 같은 세 가지 주요 이점이 있습니다.
+
+- **배럴 파일 방지**: 배럴 파일은 동일한 패키지의 다른 파일을 다시 내보내 전체 패키지에 대해 하나의 진입점을 생성하는 파일입니다. 편리해 보일 수도 있지만 [컴파일러와 번들러가 처리하기 어렵고](https://vercel.com/blog/how-we-optimized-package-imports-in-next-js#what's-the-problem-with-barrel-files) 빠르게 성능 문제로 이어질 수 있습니다.
+- **더 강력한 기능**: `exports`에는 [조건부 내보내기](https://nodejs.org/api/packages.html#main)와 같은 [`main` 필드](https://nodejs.org/api/packages.html#conditional-exports)에 비해 다른 강력한 기능도 있습니다. 일반적으로 `main`보다 `exports`을 사용하는 것이 더 현대적인 옵션이므로 사용하는 것이 좋습니다.
+- **IDE 자동 완성**: `exports`을 사용하여 패키지의 진입점을 지정하면 코드 편집기가 패키지 내보내기에 대한 자동 완성을 제공할 수 있습니다.
+
+#### `imports`(선택사항)
+
+[`imports` 필드](https://nodejs.org/api/packages.html#imports)는 패키지 내의 다른 모듈에 대한 하위 경로를 생성하는 방법을 제공합니다. 파일을 이동하는 리팩터링에 더 탄력적인 간단한 가져오기 경로를 작성하기 위한 "바로가기"와 같은 것으로 생각할 수 있습니다. 방법을 알아보려면 [TypeScript 페이지](/docs/guides/tools/typescript#use-nodejs-subpath-imports-instead-of-typescript-compiler-paths)를 방문하세요.
+
+<Callout type="info">
+유사한 목표를 달성하는 TypeScript의 `compilerOptions#paths` 옵션에 더 익숙할 것입니다. TypeScript 5.4부터 TypeScript는 `imports`에서 하위 경로를 추론할 수 있으므로 Node.js 규칙으로 작업하게 되므로 더 나은 옵션이 됩니다. 자세한 내용은 [TypeScript 가이드](/docs/guides/tools/typescript#use-nodejs-subpath-imports-instead-of-typescript-compiler-paths)를 참조하세요.
+
+</Callout>
+
+### 소스 코드
+
+물론 패키지에 일부 소스 코드가 필요합니다. 패키지는 일반적으로 `src` 디렉터리를 사용하여 소스 코드를 저장하고 `dist` 디렉터리(패키지 내에 있어야 함)로 컴파일합니다. 그러나 이것이 필수 사항은 아닙니다.
+
+## 일반적인 함정
+
+- TypeScript를 사용하는 경우 작업공간 루트에 `tsconfig.json`이 필요하지 않을 수 있습니다. 패키지는 일반적으로 작업 영역에 있는 별도 패키지의 공유 `tsconfig.json`을 기반으로 자체 구성을 독립적으로 지정해야 합니다. 자세한 내용은 [TypeScript 가이드](/docs/guides/tools/typescript#you-likely-dont-need-a-tsconfigjson-file-in-the-root-of-your-project)를 참조하세요.
+- 패키지 경계를 넘어 파일에 액세스하는 것을 최대한 피하고 싶습니다. 한 패키지에서 다른 패키지로 이동하기 위해 `../`을 작성하는 경우 필요한 곳에 패키지를 설치하고 코드로 가져와 접근 방식을 다시 생각해 볼 수 있는 기회가 있을 것입니다.
+
+## 다음 단계
+
+작업공간이 구성되었으면 이제 패키지 관리자를 사용하여 [패키지에 종속성을 설치](/docs/crafting-your-repository/managing-dependencies)할 수 있습니다.

@@ -1,0 +1,1908 @@
+{
+  "summary": {
+    "total_files": 108,
+    "existing_files": 108,
+    "utf8_ok": 108,
+    "json_ok": 10,
+    "structure_ok": 108,
+    "link_targets_ok": 108,
+    "clean_english_residue": 42,
+    "files_with_issues": 0,
+    "files_with_suspicious_english": 66,
+    "files_with_english_prose_residue": 0
+  },
+  "results": [
+    {
+      "file": "acknowledgments.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 16,
+      "suspicious_english_examples": [
+        "Button",
+        "Chau",
+        "Ekechukwu",
+        "Eric",
+        "Hanford",
+        "Iheanyi",
+        "Jack",
+        "Jared",
+        "Kenneth",
+        "Koslow",
+        "Lattice",
+        "MakeSwift",
+        "Miguel",
+        "Oller",
+        "Palmer",
+        "Rick"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "community.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 16,
+      "suspicious_english_examples": [
+        "Button",
+        "Chau",
+        "Ekechukwu",
+        "Eric",
+        "Hanford",
+        "Iheanyi",
+        "Jack",
+        "Jared",
+        "Kenneth",
+        "Koslow",
+        "Lattice",
+        "MakeSwift",
+        "Miguel",
+        "Oller",
+        "Palmer",
+        "Rick"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "core-concepts/index.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "core-concepts/internal-packages.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 4,
+      "suspicious_english_examples": [
+        "Just",
+        "Time",
+        "Turbopack",
+        "webpack"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "core-concepts/meta.json",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": true,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "core-concepts/package-and-task-graph.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "core-concepts/package-types.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "Svelte"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "core-concepts/remote-caching.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 15,
+      "suspicious_english_examples": [
+        "LocalCachingDarkImage",
+        "LocalCachingLightImage",
+        "PaaS",
+        "RemoteCachingDarkImage",
+        "RemoteCachingLightImage",
+        "Sign",
+        "Single",
+        "ThemeAwareImage",
+        "dark",
+        "from",
+        "height",
+        "import",
+        "light",
+        "props",
+        "width"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "crafting-your-repository/caching.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 15,
+      "suspicious_english_examples": [
+        "Container",
+        "Summaries",
+        "Workspace",
+        "Worktree",
+        "configuration",
+        "docs",
+        "from",
+        "globaldependencies",
+        "globalenv",
+        "import",
+        "inputs",
+        "lockfile",
+        "outputs",
+        "reference",
+        "worktree"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "crafting-your-repository/configuring-tasks.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 10,
+      "suspicious_english_examples": [
+        "Configurations",
+        "Glob",
+        "Markdown",
+        "Package",
+        "Prettier",
+        "Transit",
+        "Workspace",
+        "docs",
+        "glob",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "crafting-your-repository/constructing-ci.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 7,
+      "suspicious_english_examples": [
+        "Actions",
+        "Bearer",
+        "docs",
+        "generate",
+        "ignore",
+        "prune",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "crafting-your-repository/creating-an-internal-package.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "import"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "crafting-your-repository/developing-applications.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 6,
+      "suspicious_english_examples": [
+        "Drizzle",
+        "create",
+        "docs",
+        "false",
+        "reference",
+        "true"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "crafting-your-repository/index.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "crafting-your-repository/managing-dependencies.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 2,
+      "suspicious_english_examples": [
+        "modules",
+        "node"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "crafting-your-repository/meta.json",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": true,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "crafting-your-repository/running-tasks.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "glob"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "crafting-your-repository/structuring-a-repository.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 2,
+      "suspicious_english_examples": [
+        "exports",
+        "glob"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "crafting-your-repository/understanding-your-repository.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "crafting-your-repository/upgrading.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 4,
+      "suspicious_english_examples": [
+        "codemod",
+        "configuration",
+        "docs",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "crafting-your-repository/using-environment-variables.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 8,
+      "suspicious_english_examples": [
+        "configuration",
+        "docs",
+        "globalEnv",
+        "globalenv",
+        "globalpassthroughenv",
+        "inputs",
+        "passthroughenv",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "getting-started/add-to-existing-repository.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 5,
+      "suspicious_english_examples": [
+        "configuration",
+        "dangerouslydisablepackagemanagercheck",
+        "docs",
+        "monorepo",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "getting-started/editor-integration.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 8,
+      "suspicious_english_examples": [
+        "Extension",
+        "Language",
+        "Marketplace",
+        "Protocol",
+        "Schema",
+        "Server",
+        "VSCode",
+        "glob"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "getting-started/examples.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "getting-started/index.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "getting-started/installation.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 2,
+      "suspicious_english_examples": [
+        "docs",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "getting-started/meta.json",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": true,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "true"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/ai.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 3,
+      "suspicious_english_examples": [
+        "Markdown",
+        "from",
+        "import"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/ci-vendors/buildkite.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/ci-vendors/circleci.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "CircleCI"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/ci-vendors/github-actions.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 15,
+      "suspicious_english_examples": [
+        "Actions",
+        "Caching",
+        "Remote",
+        "Reusable",
+        "Secrets",
+        "Variables",
+        "Workflow",
+        "Workflows",
+        "actions",
+        "cache",
+        "json",
+        "package",
+        "secret",
+        "slug",
+        "yaml"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/ci-vendors/gitlab-ci.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "GitLab"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/ci-vendors/index.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "Bearer"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/ci-vendors/meta.json",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": true,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/ci-vendors/travis-ci.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 3,
+      "suspicious_english_examples": [
+        "Environment",
+        "Travis",
+        "Variables"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/ci-vendors/vercel.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 4,
+      "suspicious_english_examples": [
+        "docs",
+        "images",
+        "turborepo",
+        "vercel"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/frameworks/framework-bindings.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/frameworks/index.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/frameworks/meta.json",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": true,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/frameworks/nextjs.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/frameworks/nuxt.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/frameworks/sveltekit.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "Svelte"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/frameworks/vite.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/generating-code.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 5,
+      "suspicious_english_examples": [
+        "docs",
+        "generate",
+        "path",
+        "reference",
+        "root"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/handling-platforms.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 5,
+      "suspicious_english_examples": [
+        "configuration",
+        "docs",
+        "gitignore",
+        "globaldependencies",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/index.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/meta.json",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": true,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/microfrontends.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 37,
+      "suspicious_english_examples": [
+        "Blog",
+        "WebSocket",
+        "blog",
+        "cwdwebdocsblogshop",
+        "development",
+        "docs",
+        "fallbackturbo",
+        "filter",
+        "grouppackageNamepackage",
+        "hello",
+        "home",
+        "infer",
+        "intro",
+        "json",
+        "jsonapplications",
+        "jsonmicrofrontends",
+        "jsonnamemicrofrontends",
+        "jsonoptions",
+        "jsonturbo",
+        "localProxyPortlocalProxyPort"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/migrating-from-nx.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 32,
+      "suspicious_english_examples": [
+        "apps",
+        "cache",
+        "cachedir",
+        "concurrency",
+        "config",
+        "configuration",
+        "continueoption",
+        "docs",
+        "file",
+        "filter",
+        "force",
+        "generate",
+        "gitignore",
+        "glob",
+        "globaldependencies",
+        "globalenv",
+        "graph",
+        "inputs",
+        "json",
+        "name"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/multi-language.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "Rust"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/publishing-libraries.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 13,
+      "suspicious_english_examples": [
+        "Changeset",
+        "Changesets",
+        "CommonJS",
+        "ECMAScript",
+        "auto",
+        "beachball",
+        "configuration",
+        "dependson",
+        "docs",
+        "intuit",
+        "microsoft",
+        "monorepo",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/single-package-workspaces.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "Prettier"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/skipping-tasks.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/tools/biome.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 2,
+      "suspicious_english_examples": [
+        "from",
+        "import"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/create-turbo-callout.tsx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 7,
+      "suspicious_english_examples": [
+        "CreateTurboCallout",
+        "Link",
+        "const",
+        "create",
+        "export",
+        "from",
+        "import"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/docker.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 8,
+      "suspicious_english_examples": [
+        "Cache",
+        "Remote",
+        "argument",
+        "build",
+        "from",
+        "import",
+        "multi",
+        "stage"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/eslint.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 4,
+      "suspicious_english_examples": [
+        "Config",
+        "Flat",
+        "from",
+        "import"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/index.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/tools/jest.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 2,
+      "suspicious_english_examples": [
+        "from",
+        "import"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/meta.json",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": true,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/tools/oxc.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 9,
+      "suspicious_english_examples": [
+        "Lint",
+        "Linting",
+        "Oxlint",
+        "Prettier",
+        "Rust",
+        "from",
+        "import",
+        "oxfmt",
+        "oxlint"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/playwright.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 5,
+      "suspicious_english_examples": [
+        "configuration",
+        "docs",
+        "globalpassthroughenv",
+        "passthroughenv",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/prisma.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 2,
+      "suspicious_english_examples": [
+        "from",
+        "import"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/shadcn-ui.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "shadcn"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/storybook.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "guides/tools/tailwind.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 3,
+      "suspicious_english_examples": [
+        "PostCSS",
+        "json",
+        "package"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/typescript.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "Linting"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "guides/tools/vitest.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "vitest"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "index.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 3,
+      "suspicious_english_examples": [
+        "Linting",
+        "Monorepos",
+        "Twitter"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "messages/invalid-env-prefix.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "messages/meta.json",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": true,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "messages/missing-root-task-in-turbo-json.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "messages/package-task-in-single-package-workspace.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "messages/recursive-turbo-invocations.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "messages/unnecessary-package-task-syntax.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "meta.json",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": true,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/bin.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/boundaries.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 2,
+      "suspicious_english_examples": [
+        "from",
+        "import"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/configuration.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 37,
+      "suspicious_english_examples": [
+        "Datadog",
+        "Future",
+        "Glob",
+        "Globs",
+        "OpenTelemetry",
+        "Prometheus",
+        "Protocol",
+        "Tasks",
+        "boundaries",
+        "docs",
+        "endpoint",
+        "errorsonlyshowhash",
+        "exporter",
+        "false",
+        "flag",
+        "from",
+        "future",
+        "gRPC",
+        "glob",
+        "globalenv"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/create-turbo.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/devtools.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "devtools"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/docs.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/eslint-config-turbo.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "eslint"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/eslint-plugin-turbo.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 2,
+      "suspicious_english_examples": [
+        "Config",
+        "Flat"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/generate.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 3,
+      "suspicious_english_examples": [
+        "generator",
+        "name",
+        "workspace"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/globs.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "glob"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/index.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "Actions"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/info.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/link.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/login.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/logout.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/ls.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 2,
+      "suspicious_english_examples": [
+        "from",
+        "import"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/meta.json",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": true,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/options-overview.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 50,
+      "suspicious_english_examples": [
+        "affected",
+        "base",
+        "binary",
+        "cache",
+        "cachedir",
+        "caching",
+        "check",
+        "color",
+        "concurrency",
+        "configuration",
+        "daemon",
+        "dangerously",
+        "dangerouslydisablepackagemanagercheck",
+        "deps",
+        "disable",
+        "disabled",
+        "docs",
+        "download",
+        "enabled",
+        "environment"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/package-configurations.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 8,
+      "suspicious_english_examples": [
+        "Turbo",
+        "configuration",
+        "docs",
+        "from",
+        "import",
+        "json",
+        "outputs",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/prune.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/query.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 3,
+      "suspicious_english_examples": [
+        "GraphiQL",
+        "from",
+        "import"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/run.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 19,
+      "suspicious_english_examples": [
+        "Chrome",
+        "Summaries",
+        "base",
+        "configuration",
+        "dependencies",
+        "dependents",
+        "docs",
+        "environment",
+        "glob",
+        "globalenv",
+        "globalpassthroughenv",
+        "head",
+        "outputlogs",
+        "parallel",
+        "passthroughenv",
+        "persistent",
+        "reference",
+        "system",
+        "variables"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/scan.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 1,
+      "suspicious_english_examples": [
+        "VSCode"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/system-environment-variables.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 13,
+      "suspicious_english_examples": [
+        "affected",
+        "base",
+        "configuration",
+        "default",
+        "docs",
+        "grouped",
+        "head",
+        "json",
+        "longersignaturekey",
+        "package",
+        "packageManager",
+        "reference",
+        "true"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/telemetry.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/turbo-codemod.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 5,
+      "suspicious_english_examples": [
+        "Codemod",
+        "Schema",
+        "codemod",
+        "glob",
+        "json"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "reference/turbo-gen.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/turbo-ignore.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/unlink.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 0,
+      "suspicious_english_examples": [],
+      "english_prose_hits": [],
+      "issues": []
+    },
+    {
+      "file": "reference/watch.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 7,
+      "suspicious_english_examples": [
+        "Mode",
+        "Watch",
+        "configuration",
+        "docs",
+        "interruptible",
+        "persistent",
+        "reference"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "support-policy.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 23,
+      "suspicious_english_examples": [
+        "Apple",
+        "Debian",
+        "Intel",
+        "Linux",
+        "Play",
+        "Plug",
+        "Silicon",
+        "Windows",
+        "boundaries",
+        "config",
+        "create",
+        "docs",
+        "environment",
+        "eslint",
+        "ignore",
+        "macOS",
+        "minor",
+        "query",
+        "reference",
+        "semver"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    },
+    {
+      "file": "telemetry.mdx",
+      "exists": true,
+      "utf8_ok": true,
+      "json_ok": null,
+      "structure_ok": true,
+      "link_targets_ok": true,
+      "suspicious_english_count": 3,
+      "suspicious_english_examples": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "english_prose_hits": [],
+      "issues": [
+        "suspicious_english_residue"
+      ]
+    }
+  ]
+}

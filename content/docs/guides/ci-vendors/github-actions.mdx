@@ -1,0 +1,365 @@
+---
+title: GitHub Actions
+description: Turborepo와 함께 GitHub Actions를 사용하는 방법을 알아보세요.
+product: turborepo
+type: integration
+summary: Remote Caching과 함께 Turborepo 작업을 실행하도록 GitHub Actions 워크플로를 구성하세요.
+prerequisites:
+  - /docs/guides/ci-vendors
+related:
+  - /docs/guides/ci-vendors/circleci
+  - /docs/guides/ci-vendors/vercel
+---
+
+다음 예시는 [GitHub Actions](https://github.com/features/actions)와 함께 Turborepo를 사용하는 방법을 보여줍니다.
+
+다음과 같은 루트 `package.json`이 있다고 가정합니다.
+
+```json title="./package.json"
+{
+  "name": "my-turborepo",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  }
+}
+```
+
+그리고 `turbo.json`은 다음과 같습니다.
+
+```json title="./turbo.json"
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "build": {
+      "outputs": [".next/**", "!.next/cache/**", "other-output-dirs/**"],
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    }
+  }
+}
+```
+
+저장소에 `.github/workflows/ci.yml`이라는 파일을 만들고 다음 내용을 넣습니다.
+
+<PackageManagerTabs>
+  <Tab value="pnpm">
+    ```yaml title=".github/workflows/ci.yml"
+    name: CI
+
+    on:
+      push:
+        branches: ["main"]
+      pull_request:
+        types: [opened, synchronize]
+
+    jobs:
+      build:
+        name: 빌드 및 테스트
+        timeout-minutes: 15
+        runs-on: ubuntu-latest
+        # 원격 캐싱을 사용하려면 다음 줄의 주석을 해제하고 아래 단계를 따르세요.
+        # env:
+        #  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+        #  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+        steps:
+          - name: 코드 체크아웃
+            uses: actions/checkout@v4
+            with:
+              fetch-depth: 2
+
+          - uses: pnpm/action-setup@v3
+            with:
+              version: 8
+
+          - name: Node.js 환경 설정
+            uses: actions/setup-node@v4
+            with:
+              node-version: 20
+              cache: 'pnpm'
+
+          - name: 의존성 설치
+            run: pnpm install
+
+          - name: 빌드
+            run: pnpm build
+
+          - name: 테스트
+            run: pnpm test
+    ```
+
+  </Tab>
+
+  <Tab value="yarn">
+
+    ```yaml title=".github/workflows/ci.yml"
+    name: CI
+
+    on:
+      push:
+        branches: ["main"]
+      pull_request:
+        types: [opened, synchronize]
+
+    jobs:
+      build:
+        name: 빌드 및 테스트
+        timeout-minutes: 15
+        runs-on: ubuntu-latest
+        # 원격 캐싱을 사용하려면 다음 줄의 주석을 해제하고 아래 단계를 따르세요.
+        # env:
+        #  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+        #  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+        steps:
+          - name: 코드 체크아웃
+            uses: actions/checkout@v4
+            with:
+              fetch-depth: 2
+
+          - name: Node.js 환경 설정
+            uses: actions/setup-node@v4
+            with:
+              node-version: 20
+              cache: 'yarn'
+
+          - name: 의존성 설치
+            run: yarn
+
+          - name: 빌드
+            run: yarn build
+
+          - name: 테스트
+            run: yarn test
+    ```
+
+  </Tab>
+  <Tab value="npm">
+
+    ```yaml title=".github/workflows/ci.yml"
+    name: CI
+
+    on:
+      push:
+        branches: ["main"]
+      pull_request:
+        types: [opened, synchronize]
+
+    jobs:
+      build:
+        name: 빌드 및 테스트
+        timeout-minutes: 15
+        runs-on: ubuntu-latest
+        # 원격 캐싱을 사용하려면 다음 줄의 주석을 해제하고 아래 단계를 따르세요.
+        # env:
+        #  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+        #  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+        #  TURBO_REMOTE_ONLY: true
+
+        steps:
+          - name: 코드 체크아웃
+            uses: actions/checkout@v4
+            with:
+              fetch-depth: 2
+
+          - name: Node.js 환경 설정
+            uses: actions/setup-node@v4
+            with:
+              node-version: 20
+              cache: 'npm'
+
+          - name: 의존성 설치
+            run: npm install
+
+          - name: 빌드
+            run: npm run build
+
+          - name: 테스트
+            run: npm run test
+    ```
+
+  </Tab>
+
+  <Tab value="bun">
+    ```yaml title=".github/workflows/ci.yml"
+    name: CI
+
+    on:
+      push:
+        branches: ["main"]
+      pull_request:
+        types: [opened, synchronize]
+
+    jobs:
+      build:
+        name: 빌드 및 테스트
+        timeout-minutes: 15
+        runs-on: ubuntu-latest
+        # 원격 캐싱을 사용하려면 다음 줄의 주석을 해제하고 아래 단계를 따르세요.
+        # env:
+        #  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+        #  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+        steps:
+          - name: 코드 체크아웃
+            uses: actions/checkout@v4
+            with:
+              fetch-depth: 2
+
+          - uses: oven-sh/setup-bun@v2
+
+          - name: Node.js 환경 설정
+            uses: actions/setup-node@v4
+            with:
+              node-version: 20
+
+          - name: 의존성 설치
+            run: bun install
+
+          - name: 빌드
+            run: bun run build
+
+          - name: 테스트
+            run: bun run test
+    ```
+
+  </Tab>
+
+</PackageManagerTabs>
+
+## Vercel Remote Cache와 함께 Remote Caching 사용하기
+
+GitHub Actions에서 Remote Caching을 사용하려면, 다음 환경 변수를 GitHub Actions 워크플로에 추가해 `turbo` 명령에서 사용할 수 있도록 해야 합니다.
+
+- `TURBO_TOKEN` - Remote Cache에 접근하기 위한 Bearer 토큰
+- `TURBO_TEAM` - 아티팩트를 공유할 Vercel 팀의 slug
+
+Remote Caching을 사용하려면, 사용 중인 공급자의 Remote Cache용 팀과 토큰을 가져와야 합니다. 이 예시에서는 [Vercel Remote Cache](https://vercel.com/docs/monorepos/remote-caching)를 사용합니다.
+
+<Steps>
+<Step>
+[Vercel Dashboard](https://vercel.com/account/tokens)에서 계정용 범위 지정 액세스 토큰을 만듭니다.
+
+![Vercel Access Tokens](/images/docs/vercel-create-token.png)
+
+값을 안전한 곳에 복사해 두세요. 잠시 후 필요합니다.
+
+</Step>
+<Step>
+GitHub 저장소 설정으로 이동한 뒤 **Secrets**를 클릭하고, 이어서 **Actions** 탭을 클릭합니다. `TURBO_TOKEN`이라는 새 secret을 만들고 범위 지정 액세스 토큰 값을 입력합니다.
+
+![GitHub Secrets](/images/docs/github-actions-secrets.png)
+![GitHub Secrets Create](/images/docs/github-actions-create-secret.png)
+
+</Step>
+
+<Step>
+`TURBO_TEAM`이라는 새 저장소 변수(**Variables** 탭 클릭)를 만들고 팀 slug로 설정합니다. 이는 [your Team URL](https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fsettings&title=Find+Team+URL)에서 `vercel.com/` 뒤에 오는 부분입니다. 예를 들어 `vercel.com/acme`의 slug는 `acme`입니다.
+
+<Callout type="info">
+  secret 대신 저장소 변수를 사용하면 GitHub Actions가 로그 출력에서 팀 이름을 검열하지 않습니다.
+</Callout>
+
+![GitHub Repository Variables](/images/docs/vercel-team-repo-var.png)
+
+</Step>
+<Step>
+GitHub Actions 워크플로 상단에서 `turbo`를 사용하는 job에 다음 환경 변수를 제공합니다.
+
+```yaml title=".github/workflows/ci.yml"
+# ...
+
+jobs:
+  build:
+    name: 빌드 및 테스트
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    # Turborepo 원격 캐싱을 사용하려면 작업에 다음 환경 변수를 설정하세요.
+    env: # [!code highlight]
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }} # [!code highlight]
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }} # [!code highlight]
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+    # ...
+```
+
+</Step>
+</Steps>
+
+## Reusable Workflows와 함께 Remote Caching 사용하기
+
+Reusable Workflow에 secret을 전달하는 방법은 [중첩된 워크플로에 secret 전달하기에 대한 GitHub 문서](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows#passing-secrets-to-nested-workflows)를 참고하세요.
+
+## GitHub actions/cache와 함께 Remote Caching 사용하기
+
+다음 단계는 [actions/cache](https://github.com/actions/cache)를 사용해 GitHub에서 모노레포 아티팩트를 캐시하는 방법을 보여줍니다.
+
+<Steps>
+<Step>
+Turborepo를 사용해 작업을 실행할 package.json 스크립트를 제공합니다.
+
+`build` 스크립트가 있는 `package.json` 예시는 다음과 같습니다.
+
+```json title="./package.json"
+{
+  "name": "my-turborepo",
+  "scripts": {
+    "build": "turbo run build"
+  },
+  "devDependencies": {
+    "turbo": "1.2.5"
+  }
+}
+```
+
+</Step>
+<Step>
+CI 파일의 빌드 단계 전에 `actions/cache@v4` 액션을 사용하는 단계를 GitHub 파이프라인에 구성합니다.
+
+- `actions/cache` 액션의 `path` 속성이 위에서 설명한 출력 위치와 일치하는지 확인하세요. 아래 예시에서는 `path`를 `.turbo`로 설정했습니다.
+- 현재 실행에 대한 캐시 키를 `key` 속성에 지정합니다. 아래 예시에서는 러너 OS와 GitHub SHA의 조합을 캐시 키로 사용했습니다.
+- 원하는 캐시 접두사 패턴을 `restore-keys` 속성에 지정합니다. 이 패턴이 이후 CI 실행에서도 계속 유효해야 합니다. 아래 예시에서는 검색할 캐시 키 접두사 패턴으로 `${{ runner.os }}-turbo-`를 사용했습니다. 이렇게 하면 `github.sha`가 바뀌더라도 이후 CI 실행에서 캐시에 적중할 수 있습니다.
+
+선택한 캐시 폴더로 `.turbo`를 사용하는 `ci` yaml 예시는 다음과 같습니다.
+
+```yaml title=".github/workflows/ci.yml"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Cache turbo build setup # [!code highlight]
+        uses: actions/cache@v4 # [!code highlight]
+        with: # [!code highlight]
+          path: .turbo # [!code highlight]
+          key: ${{ runner.os }}-turbo-${{ github.sha }} # [!code highlight]
+          restore-keys: | # [!code highlight]
+            ${{ runner.os }}-turbo-
+
+      - name: Node.js 환경 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: 의존성 설치
+        run: npm install
+
+      - name: 빌드
+        run: npm run build
+```
+
+</Step>
+</Steps>

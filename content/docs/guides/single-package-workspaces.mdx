@@ -1,0 +1,169 @@
+---
+title: 단일 패키지 작업공간
+description: 단일 패키지 작업 공간에서 Turborepo를 사용하는 방법을 알아보세요.
+product: turborepo
+type: guide
+summary: 모노레포가 없는 독립형 애플리케이션에서 Turborepo의 캐싱 및 작업 병렬화를 사용하세요.
+related:
+- /docs/guides/skipping-tasks
+---
+
+Turborepo는 [다중 패키지 작업 영역](https://vercel.com/docs/vercel-platform/glossary#multi-package-workspace)(일반적으로 monorepos라고 함)에서 매우 효과적이지만 [단일 패키지 작업 영역](https://vercel.com/docs/vercel-platform/glossary#single-package-workspace)을 더 빠르게 만드는 데에도 사용할 수 있습니다.
+
+Turborepo의 가장 중요한 기능은 로컬 및 [원격 캐싱](/docs/core-concepts/remote-caching) 및 작업 병렬화를 포함한 단일 패키지 작업 공간에서 작동합니다. 작동하지 않는 기능은 패키지 작업(`app#build`)과 같은 단일 패키지의 맥락에서 의미가 없는 기능입니다.
+
+<Callout type="info">
+  단일 패키지 작업 영역의 예는 `npx create-next-app`의 출력입니다.
+ 또는 `npm create vite`.
+</Callout>
+
+## 설치
+
+`turbo`을 애플리케이션에 설치합니다.
+
+<PackageManagerTabs>
+
+  <Tab value="pnpm">
+    ```bash title="단말기"
+  pnpm add turbo --save-dev
+  ```
+
+  </Tab>
+
+  <Tab value="yarn">
+    ```bash title="단말기"
+  yarn add turbo --dev
+  ```
+
+  </Tab>
+
+  <Tab value="npm">
+  ```bash title="단말기"
+ npm install turbo --save-dev
+ ```
+
+  </Tab>
+
+  <Tab value="bun">
+    ```bash title="단말기"
+  bun install turbo --dev
+  ```
+
+  </Tab>
+</PackageManagerTabs>
+
+### 전역 `turbo`을 사용하여 `package.json` 스크립트 실행(선택 사항)
+
+더 빠른 개발자 워크플로를 위해 [`turbo` 전역적으로 설치](/docs/getting-started/installation#global-installation)하고 명령줄에서 직접 명령을 실행할 수도 있습니다.
+
+일단 설치되면 `turbo build`을 실행할 수 있으며 Turborepo는 `package.json`에서 `build` 스크립트를 실행합니다. `turbo build`을 다시 실행하면 캐시에 적중됩니다.
+
+이 시점에서 `turbo`은 코드가 변경될 때만 애플리케이션을 다시 빌드할 가능성이 높으며, 코드가 변경되면 `turbo`이 캐시를 놓칠 가능성이 높기 때문에 많은 가치를 제공하지 않습니다. 짧은 두 단계만 거치면 `turbo`을(를) 최대한 활용할 수 있습니다.
+
+## 하나의 명령으로 여러 스크립트 실행
+
+많은 리포지토리에는 실행할 설정 작업이나 사전 빌드 단계가 있습니다. 이러한 작업은 한 번에 하나씩 실행되는 경우가 많지만 `turbo`을 사용하면 쉽게 하나의 스크립트로 전환할 수 있습니다.
+
+예를 들어 작업을 시작할 때마다 항상 개발 환경을 설정해야 하는 프로젝트가 있다고 가정해 보겠습니다. 다음을 수행해야 합니다.
+
+1. 데이터베이스용 Docker 컨테이너를 시작합니다.
+2. 데이터베이스 스키마를 데이터베이스에 푸시합니다.
+3. 데이터베이스에 데이터를 시드합니다.
+4. 개발 서버를 시작합니다.
+
+Turborepo를 사용하면 이러한 작업을 하나의 명령으로 예약할 수 있습니다. 먼저 `package.json`에 스크립트를 만듭니다.
+
+```json title="package.json"
+{
+  "name": "@acme/my-app",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "check-types": "tsc --noEmit",
+    "db:up": "docker-compose up -d",
+    "db:push": "your-orm-tool schema-push",
+    "db:seed": "node ./db-seed.js"
+  }
+}
+```
+
+그런 다음 `turbo.json`에서 작업을 생성하여 다음 스크립트를 순서대로 실행합니다.
+
+```json title="./turbo.json"
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "dev": {
+      "dependsOn": ["db:seed"],
+      "cache": false,
+      "persistent": true
+    },
+    "db:seed": {
+      "dependsOn": ["db:push"],
+      "cache": false
+    },
+    "db:push": {
+      "dependsOn": ["db:up"],
+      "cache": false
+    },
+    "db:up": {
+      "cache": false
+    }
+  }
+}
+```
+
+위 작업의 `dependsOn` 배열은 작업의 순차적 순서를 만듭니다. `turbo dev`을 실행하면 `db:up`, `db:push`, `db:seed`에 대한 스크립트가 먼저 실행됩니다.
+
+## 작업 병렬화
+
+`turbo`을 사용하여 작업을 병렬화하면 가능한 경우 모든 작업을 한 번에 실행하여 작업 속도를 높일 수 있습니다. 예를 들어 ESLint, TypeScript 및 Prettier 검사를 동시에 실행할 수 있습니다. 다음과 같은 스크립트가 제공됩니다.
+
+```json title="./package.json"
+{
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier .",
+    "check-types": "tsc --noEmit"
+  }
+}
+```
+
+다음과 같은 구성을 만들 수 있습니다.
+
+```json title="turbo.json"
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "lint": {},
+    "format": {},
+    "check-types": {}
+  }
+}
+```
+
+그런 다음 모든 작업을 동시에 실행하려면 다음을 수행하십시오.
+
+```bash title="Terminal"
+turbo check-types lint format
+```
+
+## 입력을 사용하여 작업 최적화
+
+Turborepo는 단일 패키지 작업 공간을 하나의 패키지로 처리하므로 관련 없는 변경 사항이 캐시 누락을 생성하지 않도록 작업에 대한 입력을 최적화하는 데 도움이 될 수 있습니다.
+
+예를 들어 `tsc --noEmit`을 사용하여 유형을 확인하는 스크립트는 TypeScript 파일만 포함하는 입력으로 구성할 수 있습니다.
+
+```json title="./turbo.json"
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "check-types": {
+      "inputs": ["**/*.{ts,tsx}"]
+    }
+  }
+}
+```

@@ -1,0 +1,487 @@
+---
+title: 마이크로프런트엔드
+description: 로컬 개발을 위해 Turborepo에 내장된 마이크로프론트엔드 프록시를 사용하는 방법을 알아보세요.
+product: turborepo
+type: guide
+summary: 로컬 개발 중에 여러 프런트엔드 애플리케이션 간에 트래픽을 라우팅하도록 Turborepo의 내장 프록시를 설정하세요.
+related:
+- /docs/guides/frameworks
+- /docs/guides/frameworks/nextjs
+- /docs/guides/frameworks/vite
+---
+
+마이크로프론트엔드는 웹 애플리케이션이 함께 작동하는 더 작고 독립적으로 개발 및 배포된 애플리케이션으로 분해되는 아키텍처 패턴입니다.
+
+Turborepo는 통합 프록시 서버를 통해 개발 중에 로컬로 수직 마이크로프런트엔드("영역"이라고도 함)를 실행하기 위한 기본 지원을 제공합니다. 프록시는 여러 애플리케이션을 조정하고 애플리케이션 간의 트래픽을 라우팅합니다.
+
+여러 프런트엔드 애플리케이션이 포함된 단일 저장소가 있다고 가정해 보겠습니다.
+
+<Files>
+  <Folder name="앱" defaultOpen>
+    <Folder name="편물">
+      <File name="패키지.json" />
+      <File name="다음.config.js" />
+    </Folder>
+    <Folder name="문서">
+      <File name="패키지.json" />
+      <File name="다음.config.js" />
+    </Folder>
+    <Folder name="마케팅">
+      <File name="패키지.json" />
+      <File name="vite.config.ts" />
+    </Folder>
+  </Folder>
+  <File name="패키지.json" />
+  <File name="터보.json" />
+</Files>
+
+프로덕션 환경에서는 이러한 애플리케이션을 별도로 배포하고 역방향 프록시 또는 에지 라우팅을 사용하여 함께 구성할 수 있습니다. 하지만 개발 중에는 다음을 원합니다.
+
+- 단일 명령으로 모든 애플리케이션을 동시에 실행
+- 통합된 URL(예: `http://localhost:3024`)을 통해 액세스하세요.
+- 경로 패턴을 기반으로 요청을 올바른 애플리케이션으로 라우팅합니다.
+- 핫 모듈 재로딩 및 WebSocket 연결 지원
+- 포트 충돌 및 수동 조정 방지
+
+## 시작하기
+
+Turborepo는 개발 중에 마이크로프론트엔드 애플리케이션 간에 트래픽을 자동으로 라우팅하는 내장 프록시 서버를 제공합니다. 프록시는 `microfrontends.json` 구성 파일을 읽고 `turbo dev`을 실행할 때 시작됩니다.
+
+<Callout type="info">
+  `npx
+ create-turbo@latest -e with-microfrontends`이 만든 모노레포를 사용하여 다음 지침을 시도해 볼 수 있습니다.
+</Callout>
+
+### `microfrontends.json` 생성
+
+상위 애플리케이션에 `microfrontends.json` 파일을 만듭니다. 이 애플리케이션은 다른 애플리케이션과 일치하지 않을 때 모든 요청이 통과되는 애플리케이션입니다.
+
+```json title="./apps/web/microfrontends.json"
+{
+  "$schema": "https://turborepo.dev/microfrontends/schema.json",
+  "applications": {
+    "web": {
+      "development": {
+        "local": {
+          "port": 3000
+        }
+      }
+    },
+    "docs": {
+      "development": {
+        "local": {
+          "port": 3001
+        }
+      },
+      "routing": [
+        {
+          "paths": ["/docs", "/docs/:path*"]
+        }
+      ]
+    }
+  }
+}
+```
+
+### 애플리케이션 포트 설정
+
+다음으로 `turbo get-mfe-port` 명령을 사용하여 애플리케이션 개발 스크립트에 포트를 설정합니다. 이 명령은 `turbo dev`을 실행할 때 포트 번호를 삽입합니다.
+
+<Tabs items={['Next.js', 'Vite']} storageKey="framework-preference">
+
+  <Tab value="Next.js">
+
+```json title="./apps/web/package.json"
+{
+  "scripts": {
+    "dev": "next dev --port $(turbo get-mfe-port)"
+  }
+}
+```
+
+  </Tab>
+
+  <Tab value="Vite">
+
+```json title="./apps/web/package.json"
+{
+  "scripts": {
+    "dev": "vite dev --port $TURBO_MFE_PORT"
+  }
+}
+```
+
+  </Tab>
+
+</Tabs>
+
+### 기본 경로 처리
+
+프레임워크를 사용하는 경우 프레임워크의 필요에 따라 기본 경로를 설정하세요.
+
+<Tabs items={['Next.js', 'Vite']} storageKey="framework-preference">
+
+  <Tab value="Next.js">
+
+```ts title="./apps/my-app/next.config.ts"
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  basePath: "/docs",
+};
+
+export default nextConfig;
+```
+
+  </Tab>
+
+  <Tab value="Vite">
+
+```ts title="./apps/my-app/vite.config.ts"
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  base: "/admin",
+});
+```
+
+  </Tab>
+
+</Tabs>
+
+프레임워크별 지침을 보려면 [프레임워크의 마이크로프론트엔드 섹션을 방문하세요](/docs/guides/frameworks).
+
+### 실행 `turbo dev`
+
+`turbo dev`을 실행하면 Turborepo는 다음을 수행합니다.
+
+1. 구성된 포트에서 **프록시 서버를 시작**합니다(기본값: `3024`).
+1. 애플리케이션 포트를 설정하는 작업에 **@P3@@ 환경 변수를 삽입**합니다.
+1. 구성된 모든 애플리케이션에 대해 **개발 작업 실행**
+1. 경로 패턴을 기반으로 **수신 요청을 적절한 애플리케이션으로 라우팅**
+
+이제 `http://localhost:3024`에서 모든 마이크로프론트엔드 애플리케이션에 액세스할 수 있습니다.
+
+## 구성
+
+`applications` 개체의 각 애플리케이션은 다음과 같은 속성을 가질 수 있습니다.
+
+제공되지 않은 경우 애플리케이션 키는 `package.json.
+
+### `development.local`의 이름과 일치하는 데 사용됩니다.
+
+애플리케이션이 로컬로 실행되는 포트입니다.
+
+```json title="./apps/web/microfrontends.json"
+{
+  "development": {
+    "local": {
+      "port": 3000
+    }
+  }
+}
+```
+
+포트를 생략하면 Turborepo는 애플리케이션 이름(3000-8000 사이)을 기반으로 결정적 포트를 생성합니다.
+
+### `development.fallback`
+
+선택적으로 애플리케이션이 로컬에서 실행되지 않을 때 프록시할 대상을 제공합니다. 이는 애플리케이션의 하위 집합만 실행하는 `turbo dev --filter=web`과 같은 명령을 원활한 환경으로 만들기 위해 프로덕션으로 라우팅하는 데 가장 자주 사용됩니다.
+
+```json title="./apps/web/microfrontends.json"
+{
+  "development": {
+    "fallback": "example.com"
+  }
+}
+```
+
+### `routing`
+
+이 애플리케이션으로 라우팅해야 하는 경로 그룹의 배열입니다. 라우팅이 제공되지 않으면 애플리케이션은 일치하지 않는 모든 경로를 포착하는 **기본 애플리케이션**이 됩니다.
+
+하나의 애플리케이션에만 `routing` 구성이 있을 수 없습니다. 이는 다른 애플리케이션과 일치하지 않는 모든 경로를 처리하는 "루트" 애플리케이션입니다.
+
+```json title="./apps/web/microfrontends.json"
+{
+  "routing": [
+    {
+      "paths": ["/api/:version/users/:id"]
+    },
+    {
+      "paths": ["/docs", "/docs/:path*"]
+    }
+  ]
+}
+```
+
+- 경로는 **대소문자를 구분**합니다. `/Blog`과 `/blog`은 다른 경로입니다.
+- 후행 슬래시는 정규화됩니다. `/home` 및 `/home/`은 동일한 경로와 일치합니다.
+
+#### 정확히 일치
+
+```json title="./apps/web/microfrontends.json"
+{
+  "paths": ["/pricing", "/about", "/contact"]
+}
+```
+
+이러한 경로는 작성된 것과 정확히 일치합니다.
+
+#### 매개변수
+
+```json title="./apps/web/microfrontends.json"
+{
+  "paths": ["/blog/:slug", "/users/:id/profile"]
+}
+```
+
+`:`으로 시작하는 세그먼트는 단일 경로 세그먼트와 일치합니다. 예를 들어 `/blog/:slug`은 `/blog/hello`과 일치하지만 `/blog/hello/world`과는 일치하지 않습니다.
+
+#### 와일드카드
+
+```json title="./apps/web/microfrontends.json"
+{
+  "paths": ["/docs/:path*", "/api/:version*"]
+}
+```
+
+`*`으로 끝나는 매개변수는 0개 이상의 경로 세그먼트와 일치합니다. 예를 들어 `/docs/:path*`은 `/docs`, `/docs/intro` 및 `/docs/api/reference`과 일치합니다.
+
+`+` 수정자를 사용하여 하나 이상의 세그먼트(빈 경로 제외)를 일치시킬 수도 있습니다.
+
+```json title="./apps/web/microfrontends.json"
+{
+  "paths": ["/api/:path+"]
+}
+```
+
+이는 `/api/users` 및 `/api/users/123`과 일치하지만 `/api` 또는 `/api/`과는 일치하지 않습니다.
+
+#### 복잡한 라우팅 패턴
+
+중첩된 매개변수를 사용하여 정교한 라우팅을 정의할 수 있습니다.
+
+```json title="./apps/web/microfrontends.json"
+{
+  "routing": [
+    {
+      "paths": [
+        "/api/:version/users",
+        "/api/:version/users/:id",
+        "/api/:version/posts/:postId/comments/:commentId"
+      ]
+    }
+  ]
+}
+```
+
+#### 그룹 라벨
+
+더 나은 유지 관리를 위해 경로를 논리적 그룹으로 구성합니다.
+
+```json title="./apps/web/microfrontends.json"
+{
+  "$schema": "https://turborepo.dev/microfrontends/schema.json",
+  "applications": {
+    "marketing": {
+      "development": {
+        "local": 3002
+      },
+      "routing": [
+        {
+          "group": "blog",
+          "paths": ["/blog", "/blog/:slug*"]
+        },
+        {
+          "group": "sales",
+          "paths": ["/pricing", "/contact", "/demo"]
+        }
+      ]
+    }
+  }
+}
+```
+
+`group` 필드는 조직 목적을 위한 것이며 라우팅 동작에 영향을 주지 않습니다.
+
+### `packageName`
+
+선택적으로 작업 영역에서 `package.json`의 패키지 이름을 사용합니다.
+
+```json title="./apps/main/microfrontends.json"
+{
+  "applications": {
+    "main-site": {
+      "packageName": "web"
+    }
+  }
+}
+```
+
+### `options.localProxyPort`
+
+선택적으로 `localProxyPort` 옵션을 사용하여 프록시 포트를 변경합니다.
+
+기본값은 `3024`입니다.
+
+```json title="./apps/web/microfrontends.json"
+{
+  "options": {
+    "localProxyPort": 8080
+  }
+}
+```
+
+## 프로덕션과 통합
+
+Turborepo 마이크로프론트엔드 프록시는 로컬에서만 사용할 수 있습니다. 프로덕션 마이크로프런트엔드를 구현하고 통합하는 방법은 프로덕션 인프라에 따라 다릅니다. 그러나 로컬 환경과 프로덕션 환경을 통합하여 여러 환경에서 원활한 환경을 만들 수 있습니다.
+
+시작하려면 Vercel의 마이크로프론트엔드와 통합하기 위해 Turborepo의 로컬 프록시를 구축했습니다. 우리는 통합을 원하는 인프라 제공업체와 협력할 수 있기를 기대합니다.
+
+### Vercel의 마이크로프런트엔드
+
+Vercel은 다음을 제공하는 마이크로프런트엔드를 기본적으로 지원합니다.
+
+- 성능 향상을 통한 프로덕션 프록시 구현
+- 환경 전반에 걸친 대체 URL 지원
+- Vercel 도구 모음 통합
+- 기능 플래그 지원
+- 자산 접두사 처리
+
+[Vercel 문서에서 자세히 알아보세요](https://vercel.com/docs/microfrontends).
+
+#### `@vercel/microfrontends`으로 이전 중
+
+[`@vercel/microfrontends`](https://www.npmjs.com/package/@vercel/microfrontends)를 패키지에 설치하거나 작업공간에 추가하면 Turborepo는 내장된 프록시를 사용하는 대신 자동으로 이를 따릅니다. 이를 통해 점진적인 마이그레이션 경로가 가능해집니다.
+
+Turborepo와 동일한 `microfrontends.json` 구성을 사용할 수 있습니다. Turborepo의 `microfrontends.json` 스키마는 Vercel 스키마의 하위 집합이므로 `@vercel/microfrontends`과 호환됩니다.
+
+`@vercel/microfrontends`에 대해 자세히 알아보려면 [npm 패키지를 방문하세요](https://www.npmjs.com/package/@vercel/microfrontends).
+
+## 문제 해결
+
+### 포트가 이미 사용 중입니다.
+
+기본적으로 마이크로프런트엔드 프록시는 포트 3024를 사용하려고 시도합니다. 이미 해당 포트를 다른 목적으로 사용하고 있는 경우 [`options.localProxyPort`](#optionslocalproxyport)를 사용하여 Turborepo의 포트를 변경할 수 있습니다.
+
+### CSS, 이미지 또는 기타 자산이 누락되었거나 경로가 일치하지 않습니다.
+
+[`routing` 구성](#routing)에서 마이크로프런트엔드와 일치하는 경로에 자산 경로가 포함되어 있는지 확인하세요. 네트워크 탭을 확인하여 예상대로 일치하거나 일치하지 않는 경로를 찾으세요.
+
+### 애플리케이션 간 링크로 인해 오류가 발생함
+
+SPA(단일 페이지 애플리케이션) 링크(예: Next.js `<Link>` 구성 요소)를 사용하여 애플리케이션 간에 연결하면 오류가 발생할 수 있습니다. 포트와 도메인은 동일하게 유지되더라도 애플리케이션은 다릅니다. 이는 라우팅이 정의상 "단일 페이지 애플리케이션"이 아님을 의미합니다.
+
+### 프록시된 포트를 방문하면 리디렉션되지 않습니다.
+
+여전히 프록시된 포트에 직접 연결할 수 있습니다. 예를 들어 `localhost:3000`이 `localhost:3042`으로 프록시 설정된 경우에도 브라우저에서 `localhost:3000`을 방문할 수 있습니다.
+
+`localhost:3000`을 `localhost:3024`으로 리디렉션하려면 애플리케이션에서 이를 수동으로 설정해야 합니다.
+
+### 애플리케이션이 시작되지 않음
+
+다음을 확인하세요.1. `packageName`은 실제 패키지 이름과 일치합니다.
+2. 지정된 `task`이 패키지의 `package.json`에 존재합니다.
+3. 각 애플리케이션의 포트를 사용할 수 있습니다.
+4. 모든 종속성이 설치되었습니다.
+
+### `turbo get-mfe-port` 작동하지 않음
+
+`turbo get-mfe-port`을 실행할 때 오류가 발생하는 경우 다음을 확인하세요.
+
+1. 패키지 디렉터리(저장소 루트가 아님)에서 명령을 실행하고 있습니다.
+2. 패키지의 `package.json`에 `name` 필드가 있습니다.
+3. `microfrontends.json` 파일이 패키지 중 하나에 존재합니다.
+4. 현재 패키지는 `microfrontends.json`의 `applications` 섹션에 나열됩니다.
+5. `--skip-infer`을 사용하는 경우 리포지토리 루트를 가리키는 `--cwd`도 지정해야 합니다.
+
+```bash title="Terminal"
+turbo --skip-infer --cwd ../.. get-mfe-port
+```
+
+## 완전한 예
+
+다음은 전자상거래 플랫폼을 위한 마이크로프론트엔드 구성의 전체 예입니다.
+
+```json title="./apps/web/microfrontends.json"
+{
+  "$schema": "https://turborepo.dev/microfrontends/schema.json",
+  "options": {
+    "localProxyPort": 3024
+  },
+  "applications": {
+    "web": {
+      "packageName": "web",
+      "development": {
+        "local": {
+          "port": 3000
+        }
+      }
+    },
+    "docs": {
+      "packageName": "documentation",
+      "development": {
+        "local": {
+          "port": 3001
+        }
+      },
+      "routing": [
+        {
+          "group": "documentation",
+          "paths": [
+            "/docs",
+            "/docs/:path*",
+            "/api-reference",
+            "/api-reference/:path*"
+          ]
+        }
+      ]
+    },
+    "blog": {
+      "development": {
+        "local": {
+          "port": 3002
+        }
+      },
+      "routing": [
+        {
+          "group": "content",
+          "paths": [
+            "/blog",
+            "/blog/:slug",
+            "/blog/category/:category",
+            "/authors/:author"
+          ]
+        }
+      ]
+    },
+    "shop": {
+      "development": {
+        "local": {
+          "port": 3003
+        }
+      },
+      "routing": [
+        {
+          "group": "commerce",
+          "paths": [
+            "/products",
+            "/products/:id",
+            "/cart",
+            "/checkout",
+            "/orders/:orderId"
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+이 구성을 사용하면 다음과 같습니다.
+
+- `web` 앱은 홈페이지와 일치하지 않는 모든 경로를 처리합니다.
+- `docs` 앱이 모든 문서를 처리합니다.
+- `blog` 앱은 블로그 게시물과 작성자 페이지를 처리합니다.
+- `shop` 앱은 전자상거래 기능을 처리합니다.

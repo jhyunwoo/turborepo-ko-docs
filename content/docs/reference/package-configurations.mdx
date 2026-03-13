@@ -1,0 +1,454 @@
+---
+title: 패키지 구성
+description: 패키지 구성을 사용하여 모노레포 패키지에 더 큰 작업 유연성을 제공하는 방법을 알아보세요.
+product: turborepo
+type: reference
+summary: 작업 동작을 사용자 지정하기 위한 패키지별 Turbo.json 재정의 생성에 대한 참조입니다.
+prerequisites:
+- /docs/reference/configuration
+related:
+- /docs/crafting-your-repository/structuring-a-repository
+---
+
+import { ExperimentalBadge } from "@/components/geistdocs/experimental-badge";
+
+많은 모노레포는 루트 디렉터리에 `turbo.json`을 선언할 수 있습니다.
+모든 패키지에 적용되는 [작업 설명](/docs/reference/configuration#tasks). 그러나 때로는 모노레포에 작업을 다르게 구성해야 하는 패키지가 포함될 수 있습니다.
+
+이를 수용하기 위해 Turborepo를 사용하면 모든 패키지에서 `turbo.json`을 사용하여 루트 구성을 확장할 수 있습니다. 이러한 유연성 덕분에 더욱 다양한 앱과 패키지 세트가 작업 공간에 공존할 수 있고, 패키지 소유자가 모노레포의 다른 앱과 패키지에 영향을 주지 않고 전문적인 작업과 구성을 유지할 수 있습니다.
+
+## 작동 방식
+
+`turbo.json` 루트에 정의된 작업에 대한 구성을 재정의하려면 다음을 추가합니다.
+최상위 `extends`이 포함된 모노레포 패키지의 `turbo.json` 파일
+키:
+
+```jsonc title="./apps/my-app/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      // 이 패키지의 빌드 작업에 대한 사용자 정의 구성    },
+    "special-task": {}, // New task specific to this package
+  },
+}
+```
+
+<Callout type="info">
+  `extends` 배열은 `["//"]`으로 시작해야 합니다. `//`은 특별한 이름으로 사용됩니다.
+ 모노레포의 루트 디렉터리를 식별합니다. 다른 곳에서도 확장할 수 있습니다.
+ `//` 뒤에 추가하여 패키지를 삭제하세요(예: `["//", "shared-config"]`).
+</Callout>
+
+## 상속 동작
+
+패키지 구성이 루트 `turbo.json`을 확장하는 경우 작업 속성은 해당 유형에 따라 다르게 상속됩니다.
+
+### 스칼라 필드는 상속됩니다.
+
+`outputLogs`, `cache`, `persistent` 및 `interactive`과 같은 스칼라 필드는 루트 구성에서 **상속**됩니다. 이를 재정의하려는 경우에만 패키지 구성에서 지정하면 됩니다.
+
+예를 들어 루트 `turbo.json`이 작업에 대해 `"outputLogs": "hash-only"`을 설정하는 경우 모든 패키지는 해당 설정을 자동으로 상속합니다.
+
+### 배열 필드는 기본적으로 대체됩니다.
+
+`outputs`, `env`, `inputs`, `dependsOn` 및 `passThroughEnv`과 같은 배열 필드는 기본적으로 루트 구성의 값을 **완전히 대체**합니다.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "outputs": ["dist/**"],
+      "env": ["NODE_ENV"],
+    },
+  },
+}
+```
+
+```jsonc title="./apps/my-app/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      // 이는 루트 출력을 대체합니다. "dist/**"는 포함되지 않습니다.      "outputs": [".next/**"],
+    },
+  },
+}
+```
+
+### `$TURBO_EXTENDS$`을 사용하여 배열 확장
+
+상속된 배열 값을 바꾸는 대신 **추가**하려면 [`$TURBO_EXTENDS$` microsyntax](/docs/reference/configuration#turbo_extends)를 사용하세요.
+
+```jsonc title="./apps/my-app/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      // 루트에서 "dist/**"를 상속하고 ".next/**"를 추가합니다.      "outputs": ["$TURBO_EXTENDS$", ".next/**"],
+    },
+  },
+}
+```
+
+`$TURBO_EXTENDS$` 마커는 배열의 첫 번째 요소여야 합니다. `outputs`, `env`, `inputs`, `dependsOn`, `passThroughEnv` 및 `with`에서 작동합니다.
+
+### 다른 패키지에서 확장
+
+패키지 구성은 루트뿐만 아니라 다른 패키지의 `turbo.json` 파일에서 확장될 수 있습니다. 이를 통해 패키지 전체에서 공유 작업 구성을 구성할 수 있습니다.
+
+`extends` 배열의 ​​`package.json`에서 `name`을 사용하여 모든 패키지에서 확장합니다. 예를 들어 `./apps/web`에 `package.json`에 `"name": "web"`이 포함된 Next.js 앱이 있는 경우:
+
+```jsonc title="./apps/web/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "outputs": [".next/**", "!.next/cache/**"],
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+    },
+  },
+}
+```
+
+또 다른 Next.js 앱을 확장하여 동일한 구성을 공유할 수 있습니다.
+
+```jsonc title="./apps/docs/turbo.json"
+{
+  "extends": ["//", "web"],
+  "tasks": {
+    "build": {
+      // 이 패키지와 관련된 추가 사용자 정의      "env": ["NEXT_PUBLIC_DOCS_URL"],
+    },
+  },
+}
+```
+
+<Callout type="warn">
+  여러 구성에서 확장하는 경우 루트(`"//"`)는 항상
+ `extends` 배열의 **첫 번째**에 나열됩니다.
+</Callout>
+
+#### 상속 순서
+
+여러 구성에서 확장하는 경우 작업 정의는 `extends` 배열에 나타나는 순서대로 병합됩니다.
+
+1. 루트 `turbo.json`(`"//"`)이 먼저 적용됩니다.
+2. 각 추가 패키지 구성은 순서대로 적용됩니다.
+3. 현재 패키지의 구성이 마지막에 적용됩니다.
+
+이후 구성은 스칼라 필드에 대해 이전 구성을 재정의합니다. 배열 필드의 경우 교체 대신 추가하려면 [`$TURBO_EXTENDS$`으로 배열 확장](#extending-arrays-with-turbo_extends)을 참조하세요.
+
+#### 구성 공유 패턴
+
+**기존 패키지에서 확장**: 공유하려는 구성이 포함된 패키지가 이미 있는 경우 다른 패키지에서 직접 확장할 수 있습니다. 이는 하나의 패키지가 유사한 패키지(예: 다른 Next.js 앱이 확장될 수 있는 기본 Next.js 앱)의 "표준" 예제 역할을 할 때 잘 작동합니다.
+
+**전용 구성 패키지 생성**: 대규모 단일 저장소의 경우 구성 공유를 위해 특별히 패키지를 생성할 수 있습니다. 이렇게 하면 구성이 애플리케이션 코드와 별도로 유지되고 다른 패키지가 이러한 설정에 종속된다는 것이 명확해집니다. 이러한 패키지에는 일반적으로 `package.json` 및 `turbo.json`만 포함됩니다.
+
+<Tabs items={["shared-config/package.json", "shared-config/turbo.json", "apps/web/turbo.json"]}>
+<Tab value="shared-config/package.json">
+```json title="./packages/shared-config/package.json"
+{
+  "name": "shared-config",
+  "private": true
+}
+```
+</Tab>
+<Tab value="shared-config/turbo.json">
+```jsonc title="./packages/shared-config/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
+```
+</Tab>
+<Tab value="apps/web/turbo.json">
+```jsonc title="./apps/web/turbo.json"
+{
+  "extends": ["//", "shared-config"],
+  "tasks": {
+    "build": {
+      "env": ["MY_API_URL"]
+    }
+  }
+}
+```
+</Tab>
+</Tabs>
+
+### 상속에서 작업 제외
+
+루트 또는 다른 패키지에서 확장하는 경우 패키지는 기본적으로 모든 작업 정의를 상속합니다. 작업 수준 `extends` 필드를 사용하여 특정 작업을 선택 해제할 수 있습니다.
+
+#### 작업 전체 제외
+
+패키지에서 상속된 작업을 완전히 제외하려면 다른 구성 없이 `extends: false`을 설정하세요.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {},
+    "lint": {},
+    "test": {},
+  },
+}
+```
+
+```jsonc title="./packages/ui/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "lint": {
+      "extends": false, // This package does not have a lint task
+    },
+  },
+}
+```
+
+`turbo run lint`을 실행하면 `lint` 작업에 대해 `ui` 패키지가 완전히 건너뜁니다.
+
+#### 새로운 작업 정의 만들기
+
+확장 체인에서 구성을 상속하지 않는 새 작업 정의를 만들려면 다른 작업 구성과 함께 `extends: false`을 사용하세요.
+
+```jsonc title="./packages/special-app/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "extends": false, // Don't inherit from root
+      "outputs": ["out/**"],
+      "env": ["SPECIAL_VAR"],
+    },
+  },
+}
+```
+
+이는 상속된 값과 병합해서는 안 되는 완전히 다른 작업 구성이 필요할 때 유용합니다.
+
+#### 제외는 체인을 통해 전파됩니다.
+
+패키지가 작업을 제외하면 해당 제외가 해당 작업에서 확장되는 패키지로 전파됩니다.
+
+```jsonc title="./packages/base-config/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "lint": {
+      "extends": false, // Exclude lint from this config
+    },
+  },
+}
+```
+
+```jsonc title="./apps/web/turbo.json"
+{
+  "extends": ["//", "base-config"],
+  "tasks": {
+    // web은 base-config에서 제외되었기 때문에 루트에서 린트를 상속하지 않습니다.  },
+}
+```
+
+<Callout type="info">
+  작업 수준 `extends`은 패키지 구성에서만 사용할 수 있습니다. 사용
+ `extends` 루트 `turbo.json`의 작업에 대한 유효성 검사가 수행됩니다.
+ 오류.
+</Callout>
+
+## 예
+
+### 하나의 작업공간에 있는 다양한 프레임워크
+
+모노레포에 여러 개의 [Next.js](https://nextjs.org) 앱과 하나의 [SvelteKit](https://kit.svelte.dev)이 있다고 가정해 보겠습니다.
+앱. 두 프레임워크 모두 `build` 스크립트를 사용하여 빌드 출력을 생성합니다.
+각각의 `package.json`. 이러한 작업을 실행하도록 Turborepo를 구성할 수 있습니다_
+다음과 같이 루트에 단일 `turbo.json`이 있습니다.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "outputs": [".next/**", "!.next/cache/**", ".svelte-kit/**"],
+    },
+  },
+}
+```
+
+`.next/**` 및 `.svelte-kit/**`을 모두 다음과 같이 지정해야 합니다.
+[`outputs`](/docs/reference/configuration#outputs), Next.js 앱이 `.svelte-kit` 디렉터리를 생성하지 않더라도
+그 반대.
+
+패키지 구성을 사용하면 대신 사용자 정의를 추가할 수 있습니다.
+`apps/my-svelte-kit-app/turbo.json`의 SvelteKit 패키지 구성:
+
+```jsonc title="./apps/my-svelte-kit-app/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "outputs": [".svelte-kit/**"],
+    },
+  },
+}
+```
+
+루트 구성에서 SvelteKit 관련 [`outputs`](/docs/reference/configuration#outputs)을 제거합니다.
+
+```diff title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+-      "outputs": [".next/**", "!.next/cache/**", ".svelte-kit/**"]
++      "outputs": [".next/**", "!.next/cache/**"]
+    }
+  }
+}
+```
+
+이렇게 하면 각 구성을 더 쉽게 읽을 수 있을 뿐만 아니라 구성을 쉽게 읽을 수 있습니다.
+사용되는 곳과 더 가깝습니다.
+
+### 전문업무
+
+또 다른 예로, 하나의 패키지 `dependsOn`에 있는 `build` 작업이
+`compile` 작업. `dependsOn: ["compile"]`으로 보편적으로 선언할 수 있습니다.
+이는 루트 `turbo.json`에 빈 `compile` 작업이 있어야 함을 의미합니다.
+항목:
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["compile"]
+    },
+    "compile": {}
+  }
+}
+```
+
+패키지 구성을 사용하면 해당 `compile` 작업을
+`apps/my-custom-app/turbo.json`,
+
+```json title="./apps/my-app/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["compile"]
+    },
+    "compile": {}
+  }
+}
+```
+
+루트에서 제거하십시오.
+
+```diff title="./turbo.json"
+{
+  "tasks": {
++    "build": {}
+-    "build": {
+-      "dependsOn": ["compile"]
+-    },
+-    "compile": {}
+  }
+}
+```
+
+이제 `my-app`의 소유자는 `build` 작업에 대한 완전한 소유권을 가질 수 있습니다.
+하지만 루트에 정의된 다른 작업은 계속 상속됩니다.
+
+## 패키지별 작업 비교
+
+루트 `turbo.json`의 [`package#task` 구문](/docs/crafting-your-repository/configuring-tasks#depending-on-a-specific-task-in-a-specific-package)은 모든 작업 구성을 **완전히 덮어씁니다**. 아무것도 상속되지 않습니다.
+
+패키지 구성을 사용하면 스칼라 필드가 상속되며 지정한 필드만 재정의됩니다. 이는 하나 또는 두 개의 속성만 변경하면 되는 경우 중복이 줄어드는 것을 의미합니다.
+
+<Callout type="info">
+  패키지별 작업 구성을 제거할 계획은 없지만
+ 대신 대부분의 사용 사례에 패키지 구성을 사용할 수 있습니다.
+</Callout>
+
+## 경계 태그 <ExperimentalBadge>실험적</ExperimentalBadge>
+
+패키지 구성은 경계에 대한 태그를 선언하는 데에도 사용됩니다. 이렇게 하려면 `turbo.json`에 `tags` 필드를 추가하세요.
+
+```diff title="./apps/my-app/turbo.json"
+{
++ "tags": ["my-tag"],
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["compile"]
+    },
+    "compile": {}
+  }
+}
+```
+
+여기에서 태그가 가질 수 있는 종속 항목에 대한 규칙을 정의할 수 있습니다. 자세한 내용은 [경계 문서](/docs/reference/boundaries#tags)를 확인하세요.
+
+## 제한사항
+
+일반적인 아이디어는 루트 `turbo.json`과 동일하지만, 패키지
+구성에는 패키지가 생성되지 않도록 방지할 수 있는 가드레일 세트가 함께 제공됩니다.
+잠재적으로 혼란스러운 상황.
+
+### 패키지 구성은 [`workspace#task` 구문](/docs/crafting-your-repository/running-tasks)을 작업 항목으로 사용할 수 없습니다.
+
+`package`은 구성 위치를 기반으로 추론되며,
+다른 패키지의 구성을 변경할 수 없습니다. 예를 들어,
+`my-nextjs-app`에 대한 패키지 구성:
+
+```jsonc title="./apps/my-nextjs-app/turbo.json"
+{
+  "tasks": {
+    "my-nextjs-app#build": {
+      // 이는 허용되지 않습니다. 그렇긴 하지만      // 올바른 패키지 "my-nextjs-app" 참조      // 추론되므로 다시 지정할 필요가 없습니다.      // 이 구문은 동작도 다르기 때문에 허용하고 싶지 않습니다.      // ("패키지별 작업 비교" 섹션 참조)    },
+    "my-sveltekit-app#build": {
+      // "my-sveltekit-app" 패키지 구성 변경      // "my-nextjs-app"의 패키지 구성에서는 허용되지 않습니다.    },
+    "build": {
+      // 작업 이름을 사용하세요!    },
+  },
+}
+```
+
+`build` 작업은 여전히 ​​패키지별 작업에 따라 달라질 수 있습니다.
+
+```jsonc title="./apps/my-nextjs-app/turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["some-pkg#compile"], // [!code highlight]
+    },
+  },
+}
+```
+
+### 패키지 구성은 `tasks` 키의 값만 재정의할 수 있습니다.
+
+패키지 구성에서 `globalEnv` 또는 `globalDependencies`과 같은 [전역 구성](/docs/reference/configuration#global-options)을 재정의하는 것은 불가능합니다. 패키지 구성에서 변경해야 하는 구성은 실제로 전역이 아니므로 다르게 구성해야 합니다.
+
+### 루트 Turbo.json은 `extends` 키를 사용할 수 없습니다.
+
+패키지에 대한 순환 종속성을 생성하지 않으려면 루트 `turbo.json`
+어떤 것에서도 확장될 수 없습니다. `extends` 키는 무시됩니다.
+
+## 문제 해결
+
+대규모 모노레포에서는 때때로 Turborepo가 어떻게 작동하는지 이해하기 어려울 수 있습니다.
+구성을 해석합니다. 도움을 드리기 위해 `resolvedTaskDefinition`을 추가했습니다.
+[Dry Run](/docs/reference/run#--dry----dry-run) 출력에 추가합니다. 예를 들어 `turbo run build --dry-run`을 실행하면
+출력에는 이전에 있었던 모든 `turbo.json` 구성의 조합이 포함됩니다.
+`build` 작업을 실행하기 전에 고려됩니다.

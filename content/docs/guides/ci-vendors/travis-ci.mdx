@@ -1,0 +1,152 @@
+---
+title: 트래비스 CI
+description: Travis CI를 Turborepo와 함께 사용하여 CI 워크플로우를 최적화하는 방법
+product: turborepo
+type: integration
+summary: 원격 캐싱을 사용하여 Turborepo 작업을 실행하도록 Travis CI를 구성합니다.
+prerequisites:
+- /docs/guides/ci-vendors
+related:
+- /docs/guides/ci-vendors/github-actions
+- /docs/guides/ci-vendors/circleci
+---
+
+다음 예에서는 [Travis CI](https://www.travis-ci.com/)와 함께 Turborepo를 사용하는 방법을 보여줍니다.
+
+특정 루트 `package.json`의 경우:
+
+```json title="./package.json"
+{
+  "name": "my-turborepo",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  }
+}
+```
+
+그리고 `turbo.json`:
+
+```json title="./turbo.json"
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "build": {
+      "outputs": [".svelte-kit/**"],
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    }
+  }
+}
+```
+
+다음 내용으로 저장소에 `.travis.yml`이라는 파일을 만듭니다.
+
+<PackageManagerTabs>
+    <Tab value="pnpm">
+
+      ```yaml title=".travis.yml"
+   language: node_js
+   node_js:
+    - lts/*
+   cache:
+    npm: false
+    directories:
+     - "~/.pnpm-store"
+   before_install:
+    - curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm@6.32.2
+    - pnpm config set store-dir ~/.pnpm-store
+   install:
+    - pnpm install
+   script:
+    - pnpm build
+   script:
+    - pnpm test
+   ```
+
+   > 자세한 내용은 Travis CI 통합에 대한 pnpm 문서 섹션을 방문하고 [여기](https://pnpm.io/continuous-integration#travis)에서 확인하세요.
+
+  </Tab>
+    <Tab value="yarn">
+      Travis CI는 `yarn.lock` 존재로 Yarn 사용을 감지합니다. 자동으로 설치되었는지 확인합니다.
+
+   ```yaml title=".travis.yml"
+   language: node_js
+   node_js:
+    - lts/*
+   install:
+    - yarn
+   script:
+    - yarn build
+   script:
+    - yarn test
+   ```
+
+  </Tab>
+
+<Tab value="npm">
+
+    ```yaml title=".travis.yml"
+  language: node_js
+  node_js:
+   - lts/*
+  install:
+   - npm install
+  script:
+   - npm run build
+  script:
+   - npm run test
+  ```
+
+  </Tab>
+
+    <Tab value="bun">
+
+      ```yaml title=".travis.yml"
+   language: node_js
+   node_js:
+    - lts/*
+   cache:
+    npm: false
+    directories:
+     - "~/.pnpm-store"
+   before_install:
+    - curl -fsSL https://bun.sh/install | bash
+   install:
+    - bun install
+   script:
+    - bun run build
+   script:
+    - bun run test
+   ```
+
+  </Tab>
+</PackageManagerTabs>
+
+## 원격 캐싱
+
+원격 캐싱을 사용하려면 공급자의 원격 캐시에 대한 팀과 토큰을 검색하세요. 이 예에서는 [Vercel 원격 캐시](https://vercel.com/docs/monorepos/remote-caching)를 사용합니다.
+
+- `TURBO_TOKEN` - 원격 캐시에 액세스하기 위한 Bearer 토큰
+- `TURBO_TEAM` - 아티팩트를 공유하는 Vercel 팀의 슬러그
+
+Vercel 원격 캐싱을 사용하려면 몇 단계를 거쳐 이러한 변수의 값을 얻을 수 있습니다.
+
+1. [Vercel 대시보드](https://vercel.com/account/tokens)에서 계정에 대한 범위 지정 액세스 토큰을 생성합니다.
+
+![Vercel 액세스 토큰](/images/docs/vercel-create-token.png)
+
+값을 안전한 곳에 복사하세요. 곧 필요할 것입니다.
+
+2. Travis 저장소 설정으로 이동하여 _Environment Variables_ 섹션까지 아래로 스크롤합니다. `TURBO_TOKEN`이라는 새 변수를 만들고 범위 지정 액세스 토큰 값을 입력합니다.
+
+![Travis CI 변수](/images/docs/travis-ci-environment-variables.png)
+
+3. `TURBO_TEAM`이라는 두 번째 비밀을 만들고 팀 슬러그에 설정합니다. - [팀 URL](https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fsettings&title=Find+Team+URL)에서 `vercel.com/` 다음 부분입니다. 예를 들어 `vercel.com/acme`의 슬러그는 `acme`입니다.
+
+4. Travis CI는 프로젝트 설정에 저장된 환경 변수를 CI 환경에 자동으로 로드합니다. CI 파일에는 수정이 필요하지 않습니다.

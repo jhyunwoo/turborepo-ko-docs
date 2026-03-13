@@ -1,0 +1,168 @@
+---
+title: SvelteKit
+description: 모노레포에서 SvelteKit을 사용하는 방법에 대해 자세히 알아보세요.
+product: turborepo
+type: integration
+summary: Turborepo monorepo에 SvelteKit 애플리케이션을 추가하고 구성합니다.
+related:
+- /docs/guides/frameworks/framework-bindings
+- /docs/guides/microfrontends
+- /docs/guides/frameworks/vite
+---
+
+[SvelteKit](https://kit.svelte.dev/)는 Svelte를 사용하여 강력하고 성능이 뛰어난 웹 애플리케이션을 빠르게 개발하기 위한 프레임워크입니다.
+
+## 빠른 시작
+
+Turborepo에서 SvelteKit을 빠르게 시작하려면 [`with-svelte` 예제](https://github.com/vercel/turborepo/tree/main/examples/with-svelte)를 사용하세요.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm dlx create-turbo@latest -e with-svelte
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+yarn dlx create-turbo@latest -e with-svelte
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npx create-turbo@latest -e with-svelte
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bunx create-turbo@latest -e with-svelte
+```
+
+</Tab>
+</PackageManagerTabs>
+
+## 기존 저장소에 SvelteKit 애플리케이션 추가
+
+[`npm create svelte`](https://kit.svelte.dev/docs/creating-a-project)를 사용하여 패키지에 새 SvelteKit 애플리케이션을 설정하세요. 저장소 루트에서 다음을 실행합니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm dlx sv create
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+yarn dlx sv create
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npx sv create
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bunx sv create
+```
+
+</Tab>
+</PackageManagerTabs>
+
+## 저장소와 통합
+
+[내부 패키지](/docs/core-concepts/internal-packages)를 새 애플리케이션에 추가하려면 패키지 관리자를 사용하여 앱에 설치하세요.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```diff title="./apps/my-app/package.json"
+{
+  "name": "my-app",
+  "dependencies": {
++   "@repo/ui": "workspace:*"
+  }
+}
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```diff title="./apps/my-app/package.json"
+{
+  "name": "my-app",
+  "dependencies": {
++   "@repo/ui": "*"
+  }
+}
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```diff title="./apps/my-app/package.json"
+{
+ "name": "my-app",
+  "dependencies": {
++   "@repo/ui": "*"
+  }
+}
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```diff title="./apps/my-app/package.json"
+{
+ "name": "my-app",
+  "dependencies": {
++   "@repo/ui": "workspace:*"
+  }
+}
+```
+
+</Tab>
+</PackageManagerTabs>
+
+패키지 관리자의 설치 명령을 실행했는지 확인하세요. 또한 저장소의 사용 사례에 맞게 `package.json`에서 `scripts`을 업데이트해야 할 수도 있습니다.
+
+### 작업 맞춤설정
+
+기본적으로 새 애플리케이션은 `turbo.json` 루트에 정의된 작업을 사용합니다. 새 애플리케이션에 대해 작업을 다르게 구성하려면 [패키지 구성](/docs/reference/package-configurations)을 사용하세요.
+
+### 마이크로프런트엔드
+
+[Turborepo의 마이크로프런트엔드](/docs/guides/microfrontends)와 함께 Svelte를 사용하는 경우 하위 애플리케이션에 대해 `base` 속성을 설정해야 합니다. 이렇게 하면 이미지 및 CSS와 같은 자산이 올바른 애플리케이션으로 라우팅됩니다.
+
+```ts title="./apps/my-app/vite.config.ts"
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  base: "/admin",
+});
+```

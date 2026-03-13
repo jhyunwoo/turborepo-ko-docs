@@ -1,0 +1,153 @@
+---
+title: 극작가
+description: Turborepo에서 Playwright를 사용하는 방법을 알아보세요.
+product: turborepo
+type: integration
+summary: 적절한 캐싱 및 종속성 그래프 구성을 사용하여 Playwright 엔드투엔드 테스트 모음을 설정하세요.
+prerequisites:
+- /docs/crafting-your-repository/configuring-tasks
+related:
+- /docs/guides/tools/jest
+- /docs/guides/tools/vitest
+---
+
+[Playwright](https://playwright.dev/)는 최신 웹 앱에 대한 안정적인 엔드투엔드 테스트를 지원합니다.
+
+모노레포에서 실행하려는 각 테스트 모음에 대해 Playwright 패키지를 만드는 것이 좋습니다. 이는 귀하의 필요에 따라 제품군이 애플리케이션별, 도메인별 또는 기타 구성표로 분할됨을 의미할 수 있습니다. 확실하지 않은 경우 애플리케이션별로 Playwright 패키지를 만드는 것부터 시작하세요.
+
+## Playwright의 환경 변수 처리
+
+Playwright를 올바르게 실행하려면 여러 환경 변수가 필요합니다. [엄격 모드](/docs/crafting-your-repository/using-environment-variables#strict-mode)의 작업 내에서 이러한 변수를 사용할 수 있도록 하려면 엔드투엔드 작업에서 [`passThroughEnv`](/docs/reference/configuration#passthroughenv)를 사용하여 변수를 통과 변수에 추가하거나 [`globalPassThroughEnv`](/docs/reference/configuration#globalpassthroughenv)는 범위 지정 기본 설정에 따라 전역적으로 적용됩니다.
+
+<Tabs items={["Only in end-to-end task", "Globally"]}>
+
+<Tab value="Only in end-to-end task">
+
+`passThroughEnv`을 사용하는 아래 구성에서는 `PLAYWRIGHT_`으로 시작하는 환경 변수를 **`e2e` 작업**에 허용하고 **해싱에 영향을 주지 않습니다**.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "e2e": {
+      "passThroughEnv": ["PLAYWRIGHT_*"]
+    }
+  }
+}
+```
+
+</Tab>
+<Tab value="Globally">
+
+`globalPassThroughEnv`을 사용하는 아래 구성에서는 `PLAYWRIGHT_`으로 시작하는 환경 변수를 **모든 작업**에 허용하고 **해싱에 영향을 주지 않습니다**.
+
+```json title="./turbo.json"
+{
+  "globalPassThroughEnv": ["PLAYWRIGHT_*"]
+}
+```
+
+</Tab>
+
+</Tabs>
+
+극작가 내부 변수가 변경되는 상황에서 캐시를 놓치고 싶지 않기 때문에 통과 변수가 사용된다는 점에 유의하세요. 예를 들어 `PLAYWRIGHT_BROWSERS_PATH`은 Playwright에서 사용하는 브라우저 바이너리를 찾는 데 사용되며 이 위치가 변경되더라도 캐시를 놓치고 싶지 않습니다.
+
+## 작업 그래프 디자인하기
+
+우리는 엔드투엔드 제품군에 대한 적절한 캐싱 동작을 보장하고자 합니다. 특히 우리는 몇 가지 주요 상황에서 캐시 누락을 확인하려고 합니다.
+
+- 테스트 스위트가 변경되면 캐시가 누락됩니다.
+- 제품군에서 테스트한 코드가 변경되면 캐시가 누락됩니다.
+
+테스트 코드가 변경되면 작업에 대한 해시가 변경되므로 첫 번째 요구 사항은 자연스럽게 충족됩니다. 그러나 두 번째 요구 사항은 엔드투엔드 테스트가 애플리케이션 소스 코드의 변경 사항에 따라 달라지도록 해야 함을 의미합니다.
+
+이 관계는 `turbo.json` 및 종단 간 제품군의 `package.json`으로 표현될 수 있습니다.
+
+<Tabs items={["turbo.json", "package.json" ]}>
+
+<Tab value="turbo.json">
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"]
+    },
+    "e2e": {
+      "dependsOn": ["^build"] // [!code highlight]
+    }
+  }
+}
+```
+
+</Tab>
+
+<Tab value="package.json">
+
+```json title="./tooling/playwright-web/package.json"
+{
+  "name": "@repo/playwright-web",
+  "dependencies": {
+    "web": "workspace:*" // [!code highlight]
+  }
+}
+```
+
+</Tab>
+
+</Tabs>
+
+나중에 엔드투엔드 테스트를 실행하려면 [`--only` 플래그](/docs/reference/run#--only)를 사용하여 애플리케이션 빌드를 먼저 실행하지 않고 엔드투엔드 테스트를 실행하세요. 예를 들어 명령은 `turbo run e2e --filter=@repo/playwright-myapp --only`과 같을 수 있습니다.
+
+## 극작가 유틸리티 공유
+
+엔드투엔드 테스트 스위트에 필요한 공유 유틸리티에 대한 공통 패키지를 생성할 수도 있습니다. 공유 패키지 자체에 Playwright를 설치하지 않고도 소비자가 사용하는 Playwright에 접근할 수 있도록 이 공유 패키지에는 `peerDependencies`을 사용하는 것이 좋습니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+```json title="./packages/playwright-utilities/package.json"
+{
+  "name": "@repo/playwright-utilities",
+  "peerDependencies": {
+    "playwright": "workspace:*"
+}
+}
+```
+</Tab>
+
+<Tab value="yarn">
+```json title="./packages/playwright-utilities/package.json"
+{
+  "name": "@repo/playwright-utilities",
+  "peerDependencies": {
+    "playwright": "*"
+}
+}
+```
+</Tab>
+
+<Tab value="npm">
+```json title="./packages/playwright-utilities/package.json"
+{
+  "name": "@repo/playwright-utilities",
+  "peerDependencies": {
+    "playwright": "*"
+  }
+}
+```
+
+</Tab>
+
+<Tab value="bun">
+```json title="./packages/playwright-utilities/package.json"
+{
+  "name": "@repo/playwright-utilities",
+  "peerDependencies": {
+    "playwright": "workspace:*"
+  }
+}
+```
+</Tab>
+
+</PackageManagerTabs>

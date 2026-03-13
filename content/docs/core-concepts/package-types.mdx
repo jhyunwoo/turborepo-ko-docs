@@ -1,0 +1,32 @@
+---
+title: 패키지 유형
+description: 작업 영역의 다양한 유형의 패키지에 대해 알아보세요.
+product: turborepo
+type: conceptual
+summary: 작업 영역에서 애플리케이션 패키지와 라이브러리 패키지의 차이점을 이해합니다.
+related:
+- /docs/core-concepts/internal-packages
+- /docs/core-concepts/package-and-task-graph
+- /docs/crafting-your-repository/structuring-a-repository
+---
+
+Turborepo에서는 두 가지 유형의 패키지에 대해 설명합니다.
+
+- [애플리케이션 패키지](#application-packages)
+- [라이브러리 패키지](#library-packages)
+
+## 애플리케이션 패키지
+
+애플리케이션 패키지는 작업 영역에서 배포될 작업 영역의 패키지입니다. 애플리케이션 패키지의 예로는 `./apps` 디렉터리에서 일반적으로 발견되는 Next.js, Svelte, Vite 또는 CLI 애플리케이션이 있습니다.
+
+애플리케이션 패키지는 저장소의 다른 패키지에 설치되지 않고 [패키지 그래프](/docs/core-concepts/package-and-task-graph#package-graph)의 "끝"이 되는 것이 가장 좋습니다. CI/CD 파이프라인은 패키지 및 작업 그래프의 이러한 노드에서 마무리되는 경우가 가장 많습니다.
+
+### 다른 패키지에 애플리케이션 패키지 설치
+
+드문 경우지만 애플리케이션 패키지를 다른 패키지에 설치해야 할 수도 있습니다. 이는 예외여야 합니다. 이 작업을 자주 수행하는 경우 패키지 구조를 다시 생각해 볼 수 있습니다.
+
+이 규칙에 대한 예외의 예는 종단 간 테스트를 처리하는 패키지에 애플리케이션 패키지를 설치하는 것입니다. 일단 설치되면 엔드투엔드 테스트 패키지의 애플리케이션 패키지를 사용하여 애플리케이션 재배포를 인식할 수 있습니다.
+
+## 라이브러리 패키지
+
+라이브러리 패키지에는 작업 공간 주변에서 공유하려는 코드가 포함되어 있습니다. 독립적으로 배포할 수 없습니다. 대신, 리포지토리에서 최종 배포 가능 항목을 생성하기 위한 애플리케이션 패키지를 지원합니다. 이러한 패키지를 자체 하위 유형이 있는 [내부 패키지](/docs/core-concepts/internal-packages)라고 부를 수도 있습니다.

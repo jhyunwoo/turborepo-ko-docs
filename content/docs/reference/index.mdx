@@ -1,0 +1,190 @@
+---
+title: Turborepo API 참조
+description: 참조를 사용하여 Turborepo의 API에 대해 알아보세요.
+product: turborepo
+type: overview
+summary: 구성, CLI 명령 및 패키지를 포함한 모든 Turborepo API 참조 문서의 진입점입니다.
+related:
+- /docs/reference/configuration
+- /docs/reference/options-overview
+- /docs/reference/run
+---
+
+Turborepo의 API 참조는 다음 섹션으로 구분됩니다.
+
+## 구성
+
+<Cards>
+    <Card
+        title="터보.json 구성"
+        href="/docs/reference/configuration"
+        description="`turbo`의 동작을 구성합니다."
+    />
+
+    <Card
+        title="패키지 구성"
+        href="/docs/reference/package-configurations"
+        description="패키지와 관련된 구성을 만듭니다."
+    />
+
+    <Card
+        title="시스템 환경 변수"
+        href="/docs/reference/system-environment-variables"
+        description="환경 변수를 사용하여 `turbo`의 동작을 변경합니다."
+    />
+
+    <Card
+        title="파일 글로브 사양"
+        href="/docs/reference/globs"
+        description="`turbo`에서 사용할 파일을 정의합니다."
+    />
+
+</Cards>
+
+## 명령
+
+<Cards>
+    <Card
+        title="달리다"
+        href="/docs/reference/run"
+        description="`turbo`을 사용하여 작업을 실행합니다."
+    />
+
+    <Card
+        title="보다"
+        href="/docs/reference/watch"
+        description="종속성을 인식하는 단일 프로세스 작업 감시자입니다."
+    />
+    <Card
+        title="치다"
+        href="/docs/reference/prune"
+        description="대상 작업공간에 대한 부분 단일 저장소를 만듭니다."
+    />
+    <Card
+        title="경계"
+        href="/docs/reference/boundaries"
+        description="모노레포에 모범 사례를 적용하세요."
+    />
+    <Card
+        title="ㅋㅋㅋ"
+        href="/docs/reference/ls"
+        description="모노레포에 패키지를 나열합니다."
+    />
+
+    <Card
+        title="질문"
+        href="/docs/reference/query"
+        description="모노레포에 대해 GraphQL 쿼리를 실행합니다."
+    />
+
+    <Card
+        title="생성하다"
+        href="/docs/reference/generate"
+        description="새로운 앱과 패키지로 Turborepo를 확장하세요."
+    />
+
+    <Card
+        title="로그인"
+        href="/docs/reference/login"
+        description="원격 캐시 공급자에 로그인합니다."
+    />
+
+    <Card
+        title="로그아웃"
+        href="/docs/reference/logout"
+        description="원격 캐시 공급자에서 로그아웃하세요."
+    />
+
+    <Card
+        title="링크"
+        href="/docs/reference/link"
+        description="리포지토리를 원격 캐시에 연결하세요."
+    />
+
+    <Card
+        title="풀리다"
+        href="/docs/reference/unlink"
+        description="원격 캐시에서 저장소 연결을 끊습니다."
+    />
+
+    <Card
+        title="주사"
+        href="/docs/reference/scan"
+        description="Turborepo에 대해 가장 빠른 기본값을 활성화하십시오."
+    />
+
+    <Card
+        title="큰 상자"
+        href="/docs/reference/bin"
+        description="`turbo` 바이너리의 경로를 가져옵니다."
+    />
+
+    <Card
+        title="문서"
+        href="/docs/reference/docs"
+        description="Turborepo 문서를 검색하세요."
+    />
+
+    <Card
+        title="원격 측정"
+        href="/docs/reference/telemetry"
+        description="머신의 원격 측정을 관리합니다."
+    />
+
+</Cards>
+
+## 패키지
+
+<Cards>
+    <Card
+        title="창조 터보"
+        href="/docs/reference/create-turbo"
+        description="예제를 사용하여 Turborepo를 시작해보세요."
+    />
+
+    <Card
+        title="eslint-config-turbo"
+        href="/docs/reference/eslint-config-turbo"
+        description="`turbo.json`에 나열되지 않은 환경 변수를 찾습니다."
+    />
+
+    <Card
+        title="터보 무시"
+        href="/docs/reference/turbo-ignore"
+        description="`turbo-ignore`을 사용하여 작업을 건너뜁니다."
+    />
+
+    <Card
+        title="@터보/gen"
+        href="/docs/reference/turbo-gen"
+        description="Turborepo 생성기에 대한 유형 정의입니다."
+    />
+
+</Cards>
+
+## 플래그 구문
+
+값이 필요한 옵션은 공백이 필요할 때 따옴표를 사용하여 등호와 함께 전달할 수 있습니다.
+
+```bash title="Terminal"
+--opt=value
+--opt="value with a space"
+--opt value
+--opt "value with a space"
+```
+
+## 글로벌 플래그
+
+### `--color`
+
+비대화형 터미널에서도 강제로 색상을 사용합니다. 이는 색상 렌더링을 지원하는 GitHub Actions와 같은 CI 환경에서 색상 출력을 활성화하는 데 유용합니다.
+
+### `--no-color`
+
+대화형 터미널에서도 터미널 출력의 색상을 억제합니다.
+
+### `--no-update-notifier`
+
+업데이트 알림을 비활성화합니다. 이 알림은 CI 환경에서 실행될 때 자동으로 비활성화되지만 이 플래그를 통해 수동으로 비활성화할 수도 있습니다.
+
+또는 [`TURBO_NO_UPDATE_NOTIFIER` 환경 변수](/docs/reference/system-environment-variables)를 사용하여 알림을 비활성화할 수 있습니다.

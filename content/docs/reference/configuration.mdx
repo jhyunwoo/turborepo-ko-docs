@@ -1,0 +1,1116 @@
+---
+title: 터보.json 구성
+description: '`turbo.json`을 통해 Turborepo를 구성하는 방법을 알아보세요.'
+product: turborepo
+type: reference
+summary: 모든 Turbo.json 구성 옵션 및 해당 동작에 대한 전체 참조입니다.
+related:
+- /docs/reference/package-configurations
+- /docs/crafting-your-repository/configuring-tasks
+- /docs/reference/system-environment-variables
+---
+
+import { ExperimentalBadge } from "@/components/geistdocs/experimental-badge";
+
+작업공간의 루트 디렉토리에 있는 `turbo.json` 파일을 사용하여 `turbo`의 동작을 구성합니다. 다음을 수행할 수도 있습니다.
+
+- 보다 세부적으로 제어하려면 [패키지 구성](/docs/reference/package-configurations)을 사용하세요.
+- IDE 지원을 통해 구성에 설명을 추가하려면 `turbo.jsonc`을 사용하세요.
+
+## 글로벌 옵션
+
+### `extends`
+
+```jsonc title="./apps/web/turbo.json"
+{
+  "extends": ["//"],
+}
+```
+
+ 루트 `turbo.json`에서 확장하여 [패키지 구성](/docs/reference/package-configurations)을 사용하여 패키지에 대한 특정 구성을 만듭니다.
+
+- `extends` 배열은 `["//"]`으로 시작해야 루트 `turbo.json`에서 구성을 상속받을 수 있습니다.
+- 다른 패키지(예: `["//", "shared-config"]`)에서 확장할 수도 있습니다.
+- `extends`이 루트 `turbo.json`에 사용되면 무시됩니다.
+
+### `globalDependencies`
+
+```jsonc title="./turbo.json"
+{
+  "globalDependencies": [".env", "tsconfig.json"],
+}
+```
+
+모든 작업 해시에 포함하려는 glob 목록입니다. **이 glob과 일치하는 파일이 변경되면 모든 작업에서 캐시가 누락됩니다.** Globs는 `turbo.json` 위치에 상대적입니다.
+
+ 기본적으로 루트 package.json 및 잠금 파일만 [전역 해시](/docs/crafting-your-repository/caching)에 포함되며 무시할 수 없습니다. 추가된 모든 `globalDependencies`도 전역 해시에 포함됩니다.
+
+<Callout type="error">
+Globs는 저장소의 소스 제어 루트에 있어야 합니다. 
+ 저장소 외부의 Glob은 지원되지 않습니다.
+</Callout>
+
+### `globalEnv`
+
+```jsonc title="./turbo.json"
+{
+  "globalEnv": ["GITHUB_TOKEN", "PACKAGE_VERSION", "NODE_ENV"],
+}
+```
+
+모든 작업의 해시에 영향을 주고 싶은 환경 변수 목록입니다. 이러한 환경 변수 중 하나라도 바뀌면 모든 작업에서 캐시가 누락됩니다.
+
+와일드카드와 부정 구문에 대한 자세한 내용은 [`env` 섹션](#env)을 참조하세요.
+
+### `globalPassThroughEnv`
+
+```jsonc title="./turbo.json"
+{
+  "globalPassThroughEnv": ["AWS_SECRET_KEY", "GITHUB_TOKEN"],
+}
+```
+
+작업에서 사용할 수 있게 하려는 환경 변수 목록입니다. 이 키를 사용하면 모든 작업이 [엄격한 환경 변수 모드](/docs/crafting-your-repository/using-environment-variables#strict-mode)를 사용하게 됩니다.
+
+또한 Turborepo에는 운영 체제 환경 변수처럼 일반적인 경우를 위한 전역 passthrough 변수 집합이 기본으로 내장되어 있습니다. 여기에는 `HOME`, `PATH`, `APPDATA`, `SHELL`, `PWD` 등의 변수가 포함됩니다. 전체 목록은 [소스 코드](https://github.com/vercel/turborepo/blob/main/crates/turborepo-lib/src/task_hash.rs)에서 확인할 수 있습니다.
+
+<Callout
+  type="warn"
+  title="패스스루 값은 캐싱용 해시에 기여하지 않습니다"
+>
+  이 변수들의 변경이 캐시 누락을 일으키게 하려면 [`env`](#env) 또는
+  [`globalEnv`](#globalenv)에 포함해야 합니다.
+</Callout>
+
+### `ui`
+
+기본값: `"stream"`
+
+저장소에서 사용할 터미널 UI를 선택합니다.
+
+`"tui"`는 각 로그를 한 번에 보고 작업과 상호작용할 수 있게 해 줍니다. `"stream"`은 로그가 들어오는 대로 출력하며 상호작용형이 아닙니다.
+
+```json title="./turbo.json"
+{
+  "ui": "tui" | "stream"
+}
+```
+
+### `noUpdateNotifier`
+
+기본값: `false`
+
+`true`로 설정하면 새로운 `turbo` 버전이 나왔을 때 표시되는 업데이트 알림을 비활성화합니다.
+
+```json title="./turbo.json"
+{
+  "noUpdateNotifier": true
+}
+```
+
+### `concurrency`
+
+기본값: `"10"`
+
+작업 실행의 최대 동시성을 설정하거나 제한합니다. `1` 이상인 정수이거나 `50%`와 같은 백분율 값이어야 합니다.
+
+- `1`을 사용하면 직렬 실행(한 번에 하나의 작업)을 강제할 수 있습니다.
+- `100%`를 사용하면 사용 가능한 모든 논리 프로세서를 사용합니다.
+- [`--parallel`](/docs/reference/run#--parallel) 플래그를 함께 전달한 경우 이 옵션은 무시됩니다.
+
+```jsonc title="./turbo.json"
+{
+  "concurrency": "1",
+}
+```
+
+### `dangerouslyDisablePackageManagerCheck`
+
+기본값: `false`
+
+Turborepo는 저장소의 lockfile을 사용해 캐싱 동작, [패키지 그래프](https://turborepo.dev/docs/core-concepts/internal-packages) 등을 결정합니다. 그래서 Turborepo를 안정적으로 사용하도록 돕기 위해 [`packageManager` 필드](https://nodejs.org/api/packages.html#packagemanager)를 활용합니다.
+
+점진적 마이그레이션을 돕거나 `packageManager` 필드를 사용할 수 없는 상황에서는 `--dangerously-disable-package-manager-check`를 사용해 이 검사를 끄고, 불안정한 lockfile이 예측할 수 없는 동작을 만들 수 있다는 위험을 감수할 수 있습니다. 이 검사가 비활성화되면 Turborepo는 저장소에 의도된 패키지 관리자를 최선의 노력으로 탐지하려고 시도합니다.
+
+```jsonc title="./turbo.json"
+{
+  "dangerouslyDisablePackageManagerCheck": true,
+}
+```
+
+<Callout type="info">
+  [`flag`](/docs/reference/run#--dangerously-disable-package-manager-check)
+  또는
+  [`TURBO_DANGEROUSLY_DISABLE_PACKAGE_MANAGER_CHECK`](https://turborepo.dev/docs/reference/system-environment-variables)
+  환경 변수를 통해서도 이 검사를 비활성화할 수 있습니다.
+</Callout>
+
+### `cacheDir`
+
+기본값: `".turbo/cache"`
+
+파일 시스템 캐시 디렉터리를 지정합니다.
+
+```jsonc title="./turbo.json"
+{
+  "cacheDir": ".turbo/cache",
+}
+```
+
+<Callout type="info">
+`cacheDir`이 지정되지 않고 [Git
+ 작업 트리](https://git-scm.com/docs/git-worktree), Turborepo에서 자동으로
+가 기본 작업 트리와 캐시를 공유합니다. 이렇게 하면 
+ 별도의 작업 트리에서 체크아웃된 여러 분기에 걸쳐 캐시 적중이 허용됩니다. 명시적
+ `cacheDir`을 설정하면 이 동작이 비활성화됩니다.
+</Callout>
+
+### `daemon`
+
+**더 이상 사용되지 않음**: 데몬은 더 이상 `turbo run`에 사용되지 않으며 이 옵션은 버전 3.0에서 제거됩니다. `--daemon` 및 `--no-daemon` 플래그도 더 이상 사용되지 않습니다.
+
+데몬은 `turbo watch` 및 Turborepo LSP에서 계속 사용됩니다.
+
+### `envMode`
+
+기본값: `"strict"`
+
+Turborepo의 환경 모드를 사용하면 런타임 시 작업에 사용할 수 있는 환경 변수를 제어할 수 있습니다.
+
+- `"strict"`: `turbo.json`의 `env` 및 `globalEnv` 키에 지정된 변수로만 환경 변수를 필터링합니다.
+- `"loose"`: 프로세스의 모든 환경 변수를 사용할 수 있도록 허용합니다.
+
+```jsonc title="./turbo.json"
+{
+  "envMode": "strict",
+}
+```
+
+[환경 모드](/docs/crafting-your-repository/using-environment-variables#environment-modes)에 대해 자세히 알아보세요.
+
+### `futureFlags`
+
+```jsonc title="./turbo.json"
+{
+  "futureFlags": {
+    "errorsOnlyShowHash": true,
+  },
+}
+```
+
+Turborepo의 향후 버전에서 기본 동작이 될 실험적 기능을 활성화합니다.
+
+<Callout type="info">
+  `futureFlags`는 루트 `turbo.json`에서만 설정할 수 있습니다.
+  [패키지 구성](/docs/reference/package-configurations)에 설정하면 오류가
+  발생합니다.
+</Callout>
+
+#### `errorsOnlyShowHash`
+
+기본값: `false`
+
+[`outputLogs: "errors-only"`](#outputlogs)를 사용하는 경우 작업이 시작되고 성공적으로 완료될 때 작업 해시를 표시합니다. 이를 통해 전체 출력 로그를 보여주지 않고도 어떤 작업이 실행 중인지 확인할 수 있습니다.
+
+이 플래그를 활성화하면 성공적인 작업에 다음과 같은 메시지가 표시됩니다.
+
+- `cache miss, executing <hash> (only logging errors)` - 작업 실행이 시작될 때
+- `cache hit, replaying logs (no errors) <hash>` - 작업이 캐시에서 복원된 경우
+
+```jsonc title="./turbo.json"
+{
+  "futureFlags": {
+    "errorsOnlyShowHash": true,
+  },
+  "tasks": {
+    "build": {
+      "outputLogs": "errors-only",
+    },
+  },
+}
+```
+
+#### `longerSignatureKey`
+
+기본값: `false`
+
+[`remoteCache.signature`](#signature)가 활성화되어 있을 때 `TURBO_REMOTE_CACHE_SIGNATURE_KEY` 환경 변수에 최소 32바이트 길이를 강제합니다. HMAC-SHA256은 어떤 길이의 키든 허용하지만, 32바이트보다 짧은 키는 서명을 크게 약화시켜 무차별 대입으로 태그 충돌을 만들 가능성을 높입니다.
+
+이 플래그가 활성화되고 키가 너무 짧으면 Turborepo는 키 길이와 최소 요구 사항을 나타내는 오류 메시지와 함께 실행 시작 시 즉시 실패합니다.
+
+```jsonc title="./turbo.json"
+{
+  "futureFlags": {
+    "longerSignatureKey": true,
+  },
+  "remoteCache": {
+    "signature": true,
+  },
+}
+```
+
+### `tags` <ExperimentalBadge>실험적</ExperimentalBadge>
+
+```jsonc title="./apps/web/turbo.json"
+{
+  "tags": ["utils"],
+}
+```
+
+[경계](/docs/reference/boundaries)과 함께 사용할 태그를 패키지에 추가합니다.
+
+이 키는 [패키지 구성](/docs/reference/package-configurations)에서만 작동합니다. 루트 `turbo.json`에서 이 키를 사용하면 오류가 발생합니다.
+
+## 작업 정의
+
+### `tasks`
+
+`tasks` 객체의 각 키는 [`turbo run`](/docs/reference/run)으로 실행할 수 있는 작업 이름입니다. Turborepo는 [작업공간 구성](/docs/crafting-your-repository/structuring-a-repository#specifying-packages-in-a-monorepo)에 설명된 패키지들에서 해당 이름을 가진 `package.json` 스크립트를 찾습니다.
+
+작업에 설명된 나머지 구성을 바탕으로 Turborepo는 정의된 순서대로 스크립트를 실행하며, 제공된 경우 [ `outputs` 키](#outputs)에 로그와 파일 출력을 캐시합니다.
+
+아래 예시에서는 `tasks` 키 아래에 `build`, `test`, `dev` 세 가지 작업을 정의했습니다.
+
+```jsonc title="./turbo.json"
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+    },
+    "test": {
+      "outputs": ["coverage/**"],
+      "dependsOn": ["build"],
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+    },
+  },
+}
+```
+
+## 작업 옵션
+
+`tasks`에서 정의한 작업에서 사용할 수 있는 옵션을 사용하여 `turbo`이 작업을 실행하는 방법을 설명할 수 있습니다.
+
+### `extends`(작업 수준)
+
+ 작업이 확장 체인에서 구성을 상속하는지 여부를 제어합니다. 이 옵션은 [패키지 구성](/docs/reference/package-configurations)에서만 사용할 수 있으며 루트 `turbo.json`에서는 사용할 수 없습니다.
+
+```jsonc title="./packages/ui/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "lint": {
+      "extends": false, // Exclude this task from the package
+    },
+  },
+}
+```
+
+| 값 | 행동 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `false` | 태스크가 상속에서 제외됩니다. 다른 구성이 제공되지 않으면 이 패키지에 대한 작업이 존재하지 않습니다. 다른 구성이 제공되면 상속 없이 새로운 작업 정의를 생성합니다. |
+| `true`(기본값) | 작업은 일반적으로 확장 체인에서 구성을 상속합니다. |
+
+예시와 자세한 내용은 [상속에서 작업 제외](/docs/reference/package-configurations#excluding-tasks-from-inheritance)을 참조하세요.
+
+### `description`
+
+작업이 수행하는 작업에 대한 사람 또는 에이전트가 읽을 수 있는 설명입니다.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "description": "Compiles the application for production deployment",
+    },
+  },
+}
+```
+
+이 필드는 문서화 목적으로만 사용되며 작업 실행이나 캐싱 동작에 영향을 주지 않습니다.
+
+### `dependsOn`
+
+작업 실행이 시작되기 전에 완료해야 하는 작업 목록입니다.
+
+`dependsOn` 관계에는 [종속 관계](#dependency-relationships), [동일 패키지 관계](#same-package-relationships) 및 [임의의 작업 관계](#arbitrary-task-relationships)의 세 가지 유형이 있습니다.
+#### 종속 관계
+
+ `dependsOn`의 문자열 앞에 `^`을 붙이면 작업이 패키지 종속성의 작업이 먼저 완료될 때까지 기다려야 함을 `turbo`에 알립니다. 예를 들어 아래 `turbo.json`에서는:
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+    },
+  },
+}
+```
+
+`turbo`은 패키지 그래프의 "하단"에서 시작하여 내부 종속성이 없는 패키지를 찾을 때까지 각 패키지를 재귀적으로 방문합니다. 그런 다음 종속성 체인의 끝에서 `build` 작업을 먼저 실행하고 모든 `build` 작업이 순서대로 완료될 때까지 "맨 위"로 돌아갑니다.
+
+#### 동일한 패키지 관계
+
+접두사가 없는 
+작업 이름은 동일한 패키지 내의 다른 작업에 의존하는 작업을 설명합니다. 예를 들어 아래 `turbo.json`에서는:
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "test": {
+      "dependsOn": ["lint", "build"],
+    },
+  },
+}
+```
+
+`test` 작업은 `lint` 및 `build` 작업이 **동일한 패키지에서** 완료된 후에만 실행됩니다.
+
+#### 임의의 작업 관계
+
+특정 패키지 작업 간의 작업 종속성을 지정합니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "web#lint": {
+      "dependsOn": ["utils#build"]
+    }
+  }
+}
+```
+
+이 `turbo.json`에서 `web#lint` 작업은 `utils#build` 작업이 완료될 때까지 기다립니다.
+
+### `env`
+
+작업이 의존하는 환경 변수 목록입니다.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "env": ["DATABASE_URL"], // Impacts hash of all build tasks
+    },
+    "web#build": {
+      "env": ["API_SERVICE_KEY"], // Impacts hash of web's build task
+    },
+  },
+}
+```
+
+<Callout type="info">
+  Turborepo는 [프레임워크
+  추론](/docs/crafting-your-repository/using-environment-variables#framework-inference)을
+  통해 일반적인 프레임워크 접두사가 붙은 환경 변수를 자동으로 포함합니다.
+  예를 들어 패키지가 Next.js 프로젝트라면
+  [`NEXT_PUBLIC_`로 시작하는](https://nextjs.org/docs/basic-features/environment-variables#exposing-environment-variables-to-the-browser)
+  환경 변수를 별도로 지정할 필요가 없습니다.
+</Callout>
+
+#### 와일드카드
+
+Turborepo는 환경 변수에 와일드카드를 지원하므로, 주어진 접두사를 가진 모든 환경 변수를 쉽게 지정할 수 있습니다. 예를 들어 아래 `turbo.json`은 `MY_API_`로 시작하는 모든 환경 변수를 해시에 포함합니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "env": ["MY_API_*"]
+    }
+  }
+}
+```
+
+#### 부정
+
+앞의 `!`은 전체 패턴이 무효화됨을 의미합니다. 예를 들어 아래 `turbo.json`은 `MY_API_URL` 변수를 무시합니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "env": ["!MY_API_URL"]
+    }
+  }
+}
+```
+
+#### 예
+
+| 무늬 | 설명 |
+| ---------- | ------------------------------------------------------------------------------ |
+| `"*"` | 모든 환경 변수와 일치합니다. |
+| `"!*"` | 모든 환경 변수를 제외합니다. |
+| `"FOO*"` | `FOO`, `FOOD`, `FOO_FIGHTERS` 등과 일치합니다. |
+| `"FOO\*"` | `"FOO*"`으로 확인되고 `FOO`, `FOOD` 및 `FOO_FIGHTERS`과 일치합니다. |
+| `"FOO\\*"` | `FOO*`이라는 단일 환경 변수와 일치합니다. |
+| `"!FOO*"` | `FOO`으로 시작하는 모든 환경 변수를 제외합니다. |
+| `"\!FOO"` | `"!FOO"`으로 확인되고 `!FOO`이라는 단일 환경 변수를 제외합니다. |
+| `"\\!FOO"` | `!FOO`이라는 단일 환경 변수와 일치합니다. |
+| `"FOO!"` | `FOO!`이라는 단일 환경 변수와 일치합니다. |
+
+### `passThroughEnv`
+
+[엄격한 환경 모드](/docs/crafting-your-repository/using-environment-variables#strict-mode)인 경우에도, 이 작업의 런타임에서 사용할 수 있어야 하는 환경 변수의 허용 목록입니다.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      // `build` 스크립트 내에서 값을 사용할 수 있습니다.
+      "passThroughEnv": ["AWS_SECRET_KEY", "GITHUB_TOKEN"],
+    },
+  },
+}
+```
+
+<Callout type="warn">
+  `passThroughEnv`에 제공된 값은 해당 작업의 캐시 키에 기여하지 않습니다.
+  이 변수들의 변경이 캐시 누락을 일으키게 하려면 [`env`](#env) 또는
+  [`globalEnv`](#globalenv)에 포함해야 합니다.
+</Callout>
+
+### `outputs`
+
+작업이 성공적으로 완료되면 캐시할 패키지의 `package.json`에 상대적인 파일 glob 패턴 목록입니다.
+
+출력 경로를 저장소 루트 기준으로 잡아야 한다면 [`$TURBO_ROOT$`](#turbo_root)를 참조하세요.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      // 패키지의 `dist` 디렉토리에 내보낸 모든 파일을 캐시합니다.
+      "outputs": ["dist/**"],
+    },
+  },
+}
+```
+
+이 키를 생략하거나 빈 배열을 전달하면 `turbo`에 아무것도 캐시하지 않도록 지시합니다(캐싱이 활성화되면 항상 캐시되는 로그 제외).
+
+### `cache`
+
+기본값: `true`
+
+작업 출력을 캐시해야 하는지 정의합니다. `cache`을 false로 설정하면 장기 실행 개발 작업에 유용하며 작업 실행 그래프에 있을 때 작업이 항상 실행되도록 보장할 수 있습니다.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "outputs": [".svelte-kit/**", "dist/**"], // File outputs will be cached
+    },
+    "dev": {
+      "cache": false, // No outputs will be cached
+      "persistent": true,
+    },
+  },
+}
+```
+
+### `inputs`
+
+기본값: `[]`, 소스 제어로 체크인된 패키지의 모든 파일
+
+패키지가 변경되었는지 확인할 때 고려할 패키지의 `package.json`과 관련된 파일 glob 패턴 목록입니다. 다음 파일은 명시적으로 무시하려고 해도 **항상** 입력으로 간주됩니다.
+
+- `package.json`
+- `turbo.json`
+- 패키지 관리자 잠금 파일
+
+글로빙 구문에 대한 자세한 내용은 [파일 글로브 사양](/docs/reference/globs)을 방문하세요.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "test": {
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts"],
+    },
+  },
+}
+```
+
+<Callout type="warn">
+`inputs` 키를 사용하면 `.gitignore`을 고려하여 `turbo`의 기본 동작인 
+을 선택할 수 있습니다. `.gitignore`에서 
+ 원하는 대로 글로브를 재구성하거나 `$TURBO_DEFAULT$`을 사용하여 기본 동작을 기반으로 구축해야 합니다.
+</Callout>
+
+#### `$TURBO_DEFAULT$`
+
+`inputs` 키를 지정하면 기본 동작이 즉시 선택 해제되므로 `inputs` 배열 내에서 
+특수 문자열 `$TURBO_DEFAULT$`을 사용하여 `turbo`의 기본 동작을 복원할 수 있습니다. 이를 통해 더 세밀하게 기본 동작을 조정할 수 있습니다.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "check-types": {
+      // 패키지의 README를 제외한 모든 기본 입력을 고려하십시오.
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+    },
+  },
+}
+```
+
+#### `$TURBO_ROOT$`
+
+Tasks는 해당 디렉터리 외부에 있는 파일을 참조할 수 있습니다.
+
+`$TURBO_ROOT$`으로 파일 glob을 시작하면 glob이 패키지 디렉터리 대신 저장소의 루트를 기준으로 변경됩니다.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "check-types": {
+      // `src/`의 모든 Typescript 파일과 루트 tsconfig.json을 입력으로 고려합니다.
+      "inputs": ["$TURBO_ROOT$/tsconfig.json", "src/**/*.ts"],
+    },
+  },
+}
+```
+
+#### `$TURBO_EXTENDS$`
+
+[패키지 구성](/docs/reference/package-configurations)을 사용하는 경우 배열 필드는 기본적으로 루트 `turbo.json`의 값을 완전히 대체합니다. `$TURBO_EXTENDS$` 마이크로 구문은 이 동작을 **교체** 대신 **추가**로 변경합니다.
+
+이 마이크로 구문은 다음 배열 필드에서 사용할 수 있습니다:
+
+- `dependsOn`
+- `env`
+- `inputs`
+- `outputs`
+- `passThroughEnv`
+- `with`
+
+예를 들어 루트 `turbo.json`이 다음을 정의하는 경우:
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "outputs": ["dist/**"],
+    },
+  },
+}
+```
+
+A 패키지 구성은 루트 출력을 유지하면서 추가 출력을 추가할 수 있습니다:
+
+```jsonc title="./apps/web/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      // 루트에서 "dist/**"를 상속하고 ".next/**"를 추가합니다.
+      "outputs": ["$TURBO_EXTENDS$", ".next/**", "!.next/cache/**"],
+    },
+  },
+}
+```
+
+`$TURBO_EXTENDS$`이 없으면 `outputs` 배열이 `[".next/**", "!.next/cache/**"]`로 완전히 대체되어 루트 구성의 `"dist/**"`가 제거됩니다.
+
+### `outputLogs`
+
+기본값: `full`
+
+출력 로깅의 상세 수준을 설정합니다. [`--output-logs`](/docs/reference/run#--output-logs-option) CLI 옵션으로 재정의할 수 있습니다.
+
+| 옵션 | 설명 |
+| ------------- | --------------------------------- |
+| `full` | 모든 로그를 표시합니다. |
+| `hash-only` | 작업의 해시만 표시 |
+| `new-only` | 캐시 누락 로그만 표시 |
+| `errors-only` | 작업 실패 로그만 표시 |
+| `none` | 모든 작업 로그를 숨깁니다. |
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "outputLogs": "new-only",
+    },
+  },
+}
+```
+
+<Callout type="info">
+  `errors-only`를 사용하는 경우 [`errorsOnlyShowHash`](#errorsonlyshowhash)
+  future flag를 활성화하면 작업이 성공적으로 완료될 때 작업 해시를 표시하여,
+  전체 출력 로그 없이도 실행 중인 작업을 파악할 수 있습니다.
+</Callout>
+
+### `persistent`
+
+기본값: `false`
+
+작업에 `persistent` 레이블을 지정하여 다른 작업이 장기 실행 프로세스에 의존하는 것을 방지합니다. 지속 작업은 기본적으로 [대화형](#interactive)으로 만들어집니다.
+
+장기 실행 프로세스는 종료되지 않으므로 이에 의존하는 작업은 실행되지 않습니다. 작업에 지속성 레이블을 지정하면 다른 작업이 이에 의존하는 경우 `turbo`에서 오류가 발생합니다.
+
+이 옵션은 개발 서버 또는 기타 "감시" 작업에 가장 유용합니다.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "dev": {
+      "persistent": true,
+    },
+  },
+}
+```
+
+`persistent`으로 표시된 작업은 기본적으로 `interactive`이기도 합니다.
+
+### `interactive`
+
+기본값: `false`(`persistent`으로 표시된 작업의 경우 기본값은 `true`)
+
+작업에 `interactive` 레이블을 지정하여 터미널 UI에서 `stdin`의 입력을 허용하도록 합니다. `persistent`과 함께 사용해야 합니다.
+
+이 옵션은 Jest 또는 Vitest와 같이 실행 중에 조작할 수 있는 스크립트에 가장 유용합니다.
+
+```jsonc title="./turbo.json"
+{
+  "tasks": {
+    "test:watch": {
+      "interactive": true,
+      "persistent": true,
+    },
+  },
+}
+```
+
+### `interruptible`
+
+기본값: `false`
+
+`persistent` 작업에 `interruptible` 레이블을 지정하면 `turbo watch`에 의해 다시 시작될 수 있습니다.
+
+`turbo watch`는 패키지 변경 사항을 감시하고 영향을 받는 작업을 자동으로 재시작합니다. 하지만 작업이 persistent인 경우 기본적으로는 다시 시작되지 않습니다. persistent 작업의 재시작을 활성화하려면 `interruptible`을 `true`로 설정하세요.
+
+### `with`
+
+이 작업과 함께 실행될 작업 목록입니다. 이는 항상 동시에 실행되도록 하려는 장기 실행 작업에 가장 유용합니다.
+
+```json title="./apps/web/turbo.json"
+{
+  "tasks": {
+    "dev": {
+      "with": ["api#dev"],
+      "persistent": true,
+      "cache": false
+    }
+  }
+}
+```
+
+## 경계
+
+`boundaries` 태그를 사용하면 [`boundaries` 명령](/docs/reference/boundaries)에 대한 규칙을 정의할 수 있습니다.
+
+```json title="./turbo.json"
+{
+  "boundaries": {}
+}
+```
+
+### `tags`
+
+`tags` 객체의 각 키는 [`turbo boundaries`](/docs/reference/boundaries)로 확인할 수 있는 태그의 이름입니다.
+
+태그의 구성 객체에서 의존성과 의존 대상에 대한 규칙을 정의할 수 있습니다.
+
+#### `dependencies` 및 `dependents`
+
+태그의 의존성과 의존 대상에 대한 규칙입니다.
+
+허용 목록 및 거부 목록을 추가할 수 있습니다:
+
+```jsonc title="./turbo.json"
+{
+  "boundaries": {
+    "utils": {
+      "dependencies": {
+        // `ui` 태그가 있는 패키지만 허용
+        "allow": ["ui"],
+        // `unsafe` 태그가 포함된 패키지를 금지합니다.
+        "deny": ["unsafe"],
+      },
+    },
+  },
+}
+```
+
+허용 목록, 거부 목록 모두 생략 가능합니다.
+
+```jsonc title="./turbo.json"
+{
+  "boundaries": {
+    "utils": {
+      "dependencies": {
+        // `unsafe` 태그가 있는 패키지만 금지되며 다른 모든 패키지는 허용됩니다.
+        "deny": ["unsafe"],
+      },
+    },
+  },
+}
+```
+태그의 종속 항목, 즉 이 태그를 가져오는 패키지에 대해 
+규칙을 추가할 수도 있습니다.
+
+```jsonc title="./turbo.json"
+{
+  "boundaries": {
+    "utils": {
+      "dependents": {
+        // `web` 태그가 있는 패키지만 `utils` 태그가 있는 패키지를 가져올 수 있습니다.
+        "allow": ["web"],
+      },
+    },
+  },
+}
+```
+
+## 원격 캐싱
+
+전역 `remoteCache` 옵션에는 원격 캐시 사용 방식을 구성하는 다양한 필드가 있습니다.
+
+```jsonc title="./turbo.json"
+{
+  "remoteCache": {},
+}
+```
+
+### `enabled`
+
+기본값: `true`
+
+원격 캐싱을 활성화합니다.
+
+`false`이면 저장소에 유효한 토큰이 있더라도 Turborepo는 모든 원격 캐시 작업을 비활성화합니다.
+`true`이면 원격 캐싱이 활성화되지만, 사용자는 여전히 로그인하고 저장소를 원격 캐시에 연결해야 합니다.
+
+### `signature`
+
+기본값: `false`
+
+원격 캐시에 대한 요청에 대한 서명 확인을 활성화합니다.
+`true`인 경우 Turborepo는 환경 변수 `TURBO_REMOTE_CACHE_SIGNATURE_KEY`의 값을 사용하여 업로드된 모든 아티팩트에 서명합니다.
+Turborepo는 유효하지 않은 서명이 있거나 서명이 누락된 다운로드된 아티팩트를 거부합니다.
+
+<Callout type="warn">
+  최소 키 길이 32바이트를 강제하려면 [`futureFlags.longerSignatureKey`](#longersignaturekey)를 활성화하세요. 짧은 키는 HMAC-SHA256 서명을 약화시키며, 향후 주요 버전에서는 거부될 예정입니다.
+</Callout>
+
+### `preflight`
+
+기본값: `false`
+
+활성화되면 모든 HTTP 요청 앞에 OPTIONS 요청이 나타나 해당 요청이 엔드포인트에서 지원되는지 확인됩니다.
+
+### `timeout`
+
+기본값: `30`
+
+원격 캐시 작업에 대한 시간 초과를 설정합니다.
+값은 초 단위로 제공되며 전체 값만 허용됩니다.
+`0`이 전달되면 캐시 작업에 대한 시간 초과가 없습니다.
+
+### `uploadTimeout`
+
+기본값: `60`
+
+원격 캐시 업로드에 대한 시간 초과를 설정합니다.
+값은 초 단위로 제공되며 전체 값만 허용됩니다.
+`0`이 전달되면 원격 캐시 업로드에 대한 시간 초과가 없습니다.
+
+### `apiUrl`
+
+기본값: `"https://vercel.com"`
+
+원격 캐시에 대한 API 호출의 엔드포인트를 설정합니다.
+
+### `loginUrl`
+
+기본값: `"https://vercel.com"`
+
+`turbo login` 중 토큰 요청을 위한 엔드포인트 설정.
+
+### `teamId`
+
+원격 캐시 팀의 ID입니다.
+값은 모든 원격 캐시 HTTP 호출에 대한 쿼리 문자열에서 `teamId`으로 전달됩니다.
+`team_`으로 시작해야 하며 그렇지 않으면 사용되지 않습니다.
+
+### `teamSlug`
+
+원격 캐시 팀의 슬러그.
+값은 모든 원격 캐시 HTTP 호출에 대한 쿼리 문자열에서 `slug`으로 전달됩니다.
+
+## 미래의 플래그
+
+Future flag를 사용하면 실험적 기능이 기본 동작이 되기 전에 미리 opt-in할 수 있습니다.
+
+```jsonc title="./turbo.json"
+{
+  "futureFlags": {
+    "experimentalObservability": true
+  }
+}
+```
+
+### `experimentalObservability`
+
+기본값: `false`
+
+활성화되면 Turborepo는 `experimentalObservability.otel` 구성 블록이 있는 경우 이를 존중하여 실행 요약을 OTLP(OpenTelemetry Protocol) 수집기로 보냅니다.
+
+<Callout type="info">
+  잘못되었거나 불완전한 OTEL 구성(예: endpoint 누락, 잘못된 protocol)이 있으면 실행이 실패하는 대신 메트릭이 비활성화됩니다. Turborepo는 exporter를 초기화할 수 없는 경우에도 작업 실행을 정상적으로 계속합니다.
+</Callout>
+
+## 실험적 관찰 가능성
+
+기본값: `false`
+
+Datadog, Prometheus 또는 기타 OTLP 호환 수집기와 같은 관찰 백엔드로 메트릭을 내보내도록 Turborepo를 구성합니다.
+
+### `experimentalObservability`
+
+`experimentalObservability` 구성을 사용하려면 `futureFlags.experimentalObservability`을 루트 `turbo.json`에서 `true`으로 설정해야 합니다. 이는 `turbo.json` 블록, 환경 변수 및 CLI 플래그를 포함한 모든 구성 소스에 적용됩니다. future 플래그를 활성화하지 않고 관찰 가능성을 구성하면 Turborepo에서 오류가 발생합니다.
+
+```jsonc title="./turbo.json"
+{
+  "futureFlags": {
+    "experimentalObservability": true
+  },
+  "experimentalObservability": {
+    "otel": {
+      "enabled": true,
+      "protocol": "grpc",
+      "endpoint": "https://api.datadoghq.com/api/v2/otlp",
+      "headers": {
+        "X-Custom-Header": "value"
+      },
+      "timeoutMs": 10000,
+      "intervalMs": 15000,
+      "resource": {
+        "service.name": "turborepo"
+      },
+      "metrics": {
+        "runSummary": true,
+        "taskDetails": false,
+        "runAttributes": {
+          "id": false,
+          "scmRevision": false
+        },
+        "taskAttributes": {
+          "id": false,
+          "hashes": false
+        }
+      },
+      "useRemoteCacheToken": true
+    }
+  }
+}
+```
+
+#### `experimentalObservability.otel.enabled`
+
+기본값: `true`(엔드포인트가 제공되는 경우)
+
+OpenTelemetry 메트릭 내보내기를 활성화 또는 비활성화합니다.
+
+#### `experimentalObservability.otel.protocol`
+
+기본값: `"grpc"`
+
+사용할 OTLP 프로토콜입니다. 지원되는 값:
+
+- `"grpc"` - gRPC를 통한 OTLP
+- `"http/protobuf"` - protobuf 인코딩을 사용하는 HTTP를 통한 OTLP
+
+#### `experimentalObservability.otel.endpoint`
+
+**파일 기반 구성을 사용하는 경우 필수**입니다.
+
+OTLP 수집기 끝점 URL입니다. 예:
+
+- 데이터독: `"https://api.datadoghq.com/api/v2/otlp"`
+- 사용자 정의 수집기: `"https://otel-collector.example.com:4317"`(gRPC) 또는 `"https://otel-collector.example.com:4318"`(HTTP)
+
+OTEL이 활성화되었을 때 엔드포인트가 없거나 비어 있으면 내보내기가 초기화되지 않고 메트릭이 비활성화됩니다. 정상적으로 실행이 계속됩니다.
+
+<Callout type="warn">
+OTEL 엔드포인트는 `https://`을 사용해야 합니다. `http://` 엔드포인트는 
+ 메트릭과 인증 헤더가 TLS를 통해 전송되는지 확인하기 위해 거부됩니다.
+</Callout>
+
+#### `experimentalObservability.otel.headers`
+
+내보내기 요청에 포함할 선택적 HTTP 헤더입니다. 인증(예: API 키) 또는 사용자 정의 메타데이터에 유용합니다.
+
+```jsonc title="./turbo.json"
+{
+  "experimentalObservability": {
+    "otel": {
+      "headers": {
+        "X-Custom-Header": "value"
+      }
+    }
+  }
+}
+```
+
+<Callout type="warn">
+`turbo.json`에 토큰이나 API 키를 저장하지 마세요. `turbo.json`은 
+ 소스 제어에 전념하는 경우가 많으므로 민감한 헤더 값에 대해서는 환경 변수나 CI
+ 비밀 관리자를 사용하는 것이 좋습니다.
+</Callout>
+
+#### `experimentalObservability.otel.timeoutMs`
+
+기본값: `10000`(10초)
+
+콜렉터로의 내보내기 요청에 대한 시간 제한(밀리초).
+
+#### `experimentalObservability.otel.intervalMs`
+
+기본값: `15000`(15초)
+
+수집기로 주기적으로 내보내는 간격(밀리초)입니다. 이는 실행 중에 지표가 일괄 처리되어 OTLP 수집기로 전송되는 빈도를 제어합니다. 이 설정에 관계없이 실행이 완료되면 항상 최종 플러시가 수행됩니다.
+
+#### `experimentalObservability.otel.resource`
+
+내보낸 모든 측정항목에 연결할 선택적 리소스 속성입니다. 이는 관측 플랫폼에서 측정항목의 소스를 식별하는 데 도움이 됩니다.
+
+```jsonc title="./turbo.json"
+{
+  "experimentalObservability": {
+    "otel": {
+      "resource": {
+        "service.name": "turborepo",
+        "service.namespace": "ci",
+        "deployment.environment": "production"
+      }
+    }
+  }
+}
+```
+
+#### `experimentalObservability.otel.metrics`
+
+내보낼 측정항목 그룹을 제어합니다.
+
+<Callout type="info">
+일부 지표 속성에는 **무제한 카디널리티**가 있습니다. 즉, 고유한 값이 제한 없이 커집니다(예: 호출당 고유한 실행 ID, 입력 변경당 고유한 해시). Datadog과 같은 백엔드는 고유한 측정항목 시리즈별로 비용을 청구하므로 이러한 속성은 기본적으로 비활성화되어 있으며 `runAttributes` 및 `taskAttributes`를 통해 선택할 수 있습니다.
+</Callout>
+
+##### `metrics.runSummary`
+
+기본값: `true`
+
+실행 수준 측정항목 내보내기:
+
+- 실행 기간
+- 시도, 실패, 캐시된 작업
+- 종료 코드
+- SCM 지점
+
+##### `metrics.taskDetails`
+
+기본값: `false`
+
+작업별 지표 내보내기:
+
+- 작업 실행 기간
+- 캐시 적중/실패 상태 및 소스
+- 작업 식별자(작업 ID, 패키지, 해시)
+
+##### `metrics.runAttributes`
+
+ 실행 속성이 실행 수준 메트릭에 포함되도록 제어합니다. 이 옵션은 `runSummary`이 활성화된 경우에만 적용됩니다.
+
+###### `runAttributes.id`
+
+기본값: `false`
+
+실행 수준 메트릭에 `turbo.run.id` 특성을 포함합니다. 각 Turborepo 호출은 고유한 실행 ID를 생성하므로 이를 활성화하면 메트릭 카디널리티가 증가합니다.
+
+###### `runAttributes.scmRevision`
+
+기본값: `false`
+
+실행 수준 메트릭에 `turbo.scm.revision` 특성(전체 Git SHA)을 포함합니다. 각 커밋은 고유한 값을 생성하므로 이를 활성화하면 메트릭 카디널리티가 증가합니다.
+
+##### `metrics.taskAttributes`
+
+작업별 측정항목에 포함되는 작업 속성을 제어합니다. 이 옵션은 `taskDetails`이 활성화된 경우에만 적용됩니다.
+
+###### `taskAttributes.id`
+
+기본값: `false`
+
+작업별 메트릭에 `turbo.task.id` 특성(`package#task`)을 포함합니다.
+
+###### `taskAttributes.hashes`
+
+기본값: `false`
+
+작업별 지표에 `turbo.task.hash` 및 `turbo.task.external_inputs_hash` 속성을 포함합니다. 이는 작업 입력이 변경될 때마다 변경되는 콘텐츠 해시이므로 이를 활성화하면 메트릭 카디널리티가 증가합니다.
+
+#### `experimentalObservability.otel.useRemoteCacheToken`
+
+기본값: `false`
+
+ 활성화되면 기존 원격 캐시 자격 증명(`turbo login` 또는 `TURBO_TOKEN` 환경 변수)을 사용하여 OTLP 내보내기 요청에 `Authorization: Bearer <token>` 헤더를 자동으로 추가합니다. `headers` 구성의 기존 `Authorization` 헤더가 보존되고 우선 적용됩니다.
+
+이는 OTLP 수집기가 원격 캐시와 동일한 인증을 사용할 때 유용합니다.
+
+<Callout type="info">
+내보내기 실패가 기록되지만 실행 실패의 원인이 되지는 않습니다. 
+ 수집기를 사용할 수 없거나 잘못 구성된 경우 Turborepo는 
+ 작업을 정상적으로 계속 실행합니다. 잘못되거나 불완전한 구성(예: 활성화된 경우 끝점
+ 누락)으로 인해 내보내기가 초기화되지 않고 해당 실행에 대해 
+ 메트릭이 비활성화됩니다.
+</Callout>
+
+### 환경변수
+
+`turbo.json` 설정보다 우선하는 환경 변수를 통해 관찰 가능성을 구성할 수도 있습니다.
+
+- `TURBO_EXPERIMENTAL_OTEL_ENABLED` - 내보내기 기능 활성화/비활성화(`1` 또는 `0`)
+- `TURBO_EXPERIMENTAL_OTEL_PROTOCOL` - 프로토콜(`grpc` 또는 `http/protobuf`)
+- `TURBO_EXPERIMENTAL_OTEL_ENDPOINT` - 수집기 HTTPS 엔드포인트 URL
+- `TURBO_EXPERIMENTAL_OTEL_TIMEOUT_MS` - 시간 초과(밀리초)
+- `TURBO_EXPERIMENTAL_OTEL_INTERVAL_MS` - 내보내기 간격(밀리초)
+- `TURBO_EXPERIMENTAL_OTEL_HEADERS` - 쉼표로 구분된 키=값 쌍(예: `"Header=value,Other=value"`)
+- `TURBO_EXPERIMENTAL_OTEL_RESOURCE` - 리소스 속성에 대한 쉼표로 구분된 키=값 쌍
+- `TURBO_EXPERIMENTAL_OTEL_METRICS_RUN_SUMMARY` - 실행 요약 지표 활성화(`1` 또는 `0`)
+- `TURBO_EXPERIMENTAL_OTEL_METRICS_TASK_DETAILS` - 작업 세부정보 메트릭 활성화(`1` 또는 `0`)
+- `TURBO_EXPERIMENTAL_OTEL_METRICS_TASK_ATTRIBUTES_ID` - 작업 ID 속성 포함(`1` 또는 `0`)
+- `TURBO_EXPERIMENTAL_OTEL_METRICS_TASK_ATTRIBUTES_HASHES` - 작업 해시 속성 포함(`1` 또는 `0`)
+- `TURBO_EXPERIMENTAL_OTEL_USE_REMOTE_CACHE_TOKEN` - OTLP 인증에 원격 캐시 토큰 사용(`1` 또는 `0`)
+
+### CLI 플래그
+
+CLI 플래그를 통해 관찰 가능성 설정을 재정의할 수 있습니다.
+
+- `--experimental-otel-enabled` - 내보내기 활성화/비활성화
+- `--experimental-otel-protocol` - 프로토콜(`grpc` 또는 `http/protobuf`)
+- `--experimental-otel-endpoint` - 수집기 HTTPS 엔드포인트 URL
+- `--experimental-otel-timeout-ms` - 시간 초과(밀리초)
+- `--experimental-otel-interval-ms` - 내보내기 간격(밀리초)
+- `--experimental-otel-header KEY=VALUE` - HTTP 헤더 추가(반복 가능)
+- `--experimental-otel-resource KEY=VALUE` - 리소스 속성 추가(반복 가능)
+- `--experimental-otel-metrics-run-summary` - 실행 요약 측정항목 활성화
+- `--experimental-otel-metrics-task-details` - 작업 세부정보 측정항목 활성화
+- `--experimental-otel-use-remote-cache-token` - OTLP 인증을 위해 원격 캐시 토큰을 사용합니다.

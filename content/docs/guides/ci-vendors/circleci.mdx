@@ -1,0 +1,207 @@
+---
+title: 서클CI
+description: Turborepo와 함께 CircleCI를 사용하는 방법을 알아보세요.
+product: turborepo
+type: integration
+summary: 원격 캐싱으로 Turborepo 작업을 실행하도록 CircleCI 워크플로를 구성합니다.
+prerequisites:
+- /docs/guides/ci-vendors
+related:
+- /docs/guides/ci-vendors/github-actions
+- /docs/guides/ci-vendors/buildkite
+---
+
+다음 예에서는 [CircleCI](https://circleci.com/)와 함께 Turborepo를 사용하는 방법을 보여줍니다.
+
+<Callout type="warn" title="CircleCI의 TTY">
+  CircleCI [대화형 터미널을 사용합니다.
+ (TTY)](https://discuss.circleci.com/t/reprise-allow-for-using-circle-ci-tooling-without-a-tty/23309)
+ Turborepo의 터미널 UI가 충돌합니다. 이 문제를 해결하려면
+ CircleCI 구성의 `TURBO_UI=false` 환경 변수입니다.
+</Callout>
+
+특정 루트 `package.json`의 경우:
+
+```json title="./package.json"
+{
+  "name": "my-turborepo",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  }
+}
+```
+
+그리고 `turbo.json`:
+
+```json title="./turbo.json"
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "build": {
+      "outputs": [".next/**", "!.next/cache/**"],
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    }
+  }
+}
+```
+
+다음 내용으로 저장소에 `.circleci/config.yml`이라는 파일을 만듭니다.
+
+<PackageManagerTabs>
+
+  <Tab value="pnpm">
+
+    ```yaml title=".circleci/config.yml"
+  version: 2.1
+  orbs:
+   node: circleci/node@5.0.2
+  workflows:
+   test:
+    jobs:
+     - test
+  jobs:
+   test:
+    docker:
+     - image: cimg/node:lts
+    steps:
+     - checkout
+     - node/install-packages
+     - run:
+      command: npm i -g pnpm
+      environment:
+       TURBO_UI: "false"
+     - run:
+      command: pnpm build
+      environment:
+       TURBO_UI: "false"
+     - run:
+      command: pnpm test
+      environment:
+       TURBO_UI: "false"
+  ```
+
+  </Tab>
+  <Tab value="yarn">
+
+    ```yaml title=".circleci/config.yml"
+  version: 2.1
+  orbs:
+   node: circleci/node@5.0.2
+  workflows:
+   test:
+    jobs:
+     - test
+  jobs:
+   test:
+    docker:
+     - image: cimg/node:lts
+    steps:
+     - checkout
+     - node/install-packages:
+      pkg-manager: yarn
+     - run:
+      command: yarn build
+      environment:
+       TURBO_UI: "false"
+     - run:
+      command: yarn test
+      environment:
+       TURBO_UI: "false"
+  ```
+
+  </Tab>
+
+<Tab value="npm">
+
+    ```yaml title=".circleci/config.yml"
+  version: 2.1
+  orbs:
+   node: circleci/node@5.0.2
+  workflows:
+   test:
+    jobs:
+     - test
+  jobs:
+   test:
+    docker:
+     - image: cimg/node:lts
+    steps:
+     - checkout
+     - node/install-packages
+     - run:
+      command: npm run build
+      environment:
+       TURBO_UI: "false"
+
+     - run:
+      command: npm run test
+      environment:
+       TURBO_UI: "false"
+  ```
+
+  </Tab>
+
+  <Tab value="bun">
+
+    ```yaml title=".circleci/config.yml"
+  version: 2.1
+  orbs:
+   node: circleci/node@5.0.2
+  workflows:
+   test:
+    jobs:
+     - test
+  jobs:
+   test:
+    docker:
+     - image: cimg/node:lts
+    steps:
+     - checkout
+     - node/install-packages
+     - run:
+      command: npm i -g bun
+      environment:
+       TURBO_UI: "false"
+     - run:
+      command: bun run build
+      environment:
+       TURBO_UI: "false"
+     - run:
+      command: bun run test
+      environment:
+       TURBO_UI: "false"
+  ```
+
+  </Tab>
+</PackageManagerTabs>
+
+## 원격 캐싱
+
+원격 캐싱을 사용하려면 공급자의 원격 캐시에 대한 팀과 토큰을 검색하세요. 이 예에서는 [Vercel 원격 캐시](https://vercel.com/docs/monorepos/remote-caching)를 사용합니다.
+
+- `TURBO_TOKEN` - 원격 캐시에 액세스하기 위한 Bearer 토큰
+- `TURBO_TEAM` - 아티팩트를 공유하는 Vercel 팀의 슬러그
+
+Vercel 원격 캐싱을 사용하려면 몇 단계를 거쳐 이러한 변수의 값을 얻을 수 있습니다.
+
+1. [Vercel 대시보드](https://vercel.com/account/tokens)에서 계정에 대한 범위 지정 액세스 토큰을 생성합니다.
+
+![Vercel 액세스 토큰](/images/docs/vercel-create-token.png)
+
+값을 안전한 곳에 복사하세요. 곧 필요할 것입니다.
+
+2. CircleCI 프로젝트 설정으로 이동하여 **환경 변수** 탭을 클릭하세요. `TURBO_TOKEN`이라는 새 비밀을 만들고 범위 지정 액세스 토큰 값을 입력합니다.
+
+![CircleCI 환경 변수](/images/docs/circleci-environment-variables.png)
+![CircleCI 환경 변수 생성](/images/docs/circleci-create-environment-variables.png)
+
+3. `TURBO_TEAM`이라는 두 번째 비밀을 만들고 팀 슬러그에 설정합니다. - [팀 URL](https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fsettings&title=Find+Team+URL)에서 `vercel.com/` 다음 부분입니다. 예를 들어 `vercel.com/acme`의 슬러그는 `acme`입니다.
+
+4. CircleCI는 프로젝트 설정에 저장된 환경변수를 CI 환경에 자동으로 불러옵니다. CI 파일에는 수정이 필요하지 않습니다.

@@ -1,0 +1,191 @@
+---
+title: 출판 라이브러리
+description: 모노레포에서 npm 레지스트리에 라이브러리를 게시하는 방법을 알아보세요.
+product: turborepo
+type: guide
+summary: tsup 및 Changesets를 사용하여 모노레포에서 npm으로 패키지를 번들링하고 버전을 지정하고 게시합니다.
+prerequisites:
+- /docs/crafting-your-repository/creating-an-internal-package
+related:
+- /docs/guides/generating-code
+- /docs/guides/tools/typescript
+---
+
+올바른 도구를 사용하면 모노레포에서 npm 레지스트리에 패키지를 게시하는 것이 원활한 경험이 될 수 있습니다.
+
+이 가이드는 강력한 패키지에 필요한 모든 컴파일, 번들링 및 게시 구성을 해결할 수는 없지만 몇 가지 기본 사항을 설명합니다.
+
+<Callout type="info">
+  모노레포의 일부를 게시하려면 이 설정을 따라야 합니다.
+ npm으로 패키지를 보내세요. npm에 게시할 필요가 없다면 다음을 사용해야 합니다.
+ [내부
+ 패키지](/docs/crafting-your-repository/creating-an-internal-package)를 대신 사용하세요.
+ 설정하고 사용하기가 훨씬 쉽습니다.
+</Callout>
+
+## 번들링
+
+[내부 패키지](/docs/crafting-your-repository/creating-an-internal-package)와 달리 외부 패키지는 [npm](https://www.npmjs.com)에 배포할 수 있으며 _그리고_ 로컬에서 사용할 수 있습니다. 이 가이드에서는 npm에서 가장 일반적으로 사용되는 형식인 [ECMAScript 모듈](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)(`esm`)과 [CommonJS 모듈](https://en.wikipedia.org/wiki/CommonJS)(`cjs`) 모두에 패키지를 번들로 제공합니다.
+
+## 빌드 스크립트 설정
+
+[내부 패키지](/docs/crafting-your-repository/creating-an-internal-package) 튜토리얼을 사용하여 생성된 패키지부터 시작해 보겠습니다.
+
+여기서 우리는 숫자를 더하고 빼는 몇 가지 도우미 함수가 포함된 `@repo/math` 패키지를 만들었습니다. 우리는 이 패키지가 npm에 적합하다고 판단하여 이를 번들로 묶을 것입니다.
+
+번들러를 사용하여 `@repo/math`에 `build` 스크립트를 추가하겠습니다. 어떤 것을 선택해야 할지 확신이 없다면 [`tsup`](https://tsup.egoist.dev/)를 추천합니다.
+
+패키지 관리자를 사용하여 `./packages/math` 패키지 내에 `tsup`을 설치한 다음 이에 대한 빌드 스크립트를 만듭니다.
+
+```json title="./packages/math/package.json"
+{
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts"
+  }
+}
+```
+
+`tsup`은 기본적으로 `dist` 디렉터리에 파일을 출력하므로 다음을 수행해야 합니다.
+
+1. `.gitignore` 파일에 `dist`을 추가하여 해당 파일이 소스 제어에 커밋되지 않았는지 확인하세요.
+2. `turbo.json`의 `build` 출력에 `dist`을 추가합니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "outputs": ["dist/**"]
+    }
+  }
+}
+```
+
+이렇게 하면 `tsup`이 실행될 때 출력이 Turborepo에 의해 [캐시](/docs/crafting-your-repository/caching)될 수 있습니다.
+
+마지막으로 패키지 진입점을 업데이트해야 합니다. `package.json` 내에서 CommonJS 모듈(`cjs`)을 사용하는 클라이언트의 경우 `main`을 `./dist/index.js`을 가리키도록 변경하고, ECMAScript 모듈(`esm`)을 사용하는 클라이언트의 경우 `module`을 `./dist/index.mjs`을 가리키도록 변경하고, `types`을 유형 정의 파일인 `./dist/index.d.ts`로 변경합니다.
+
+```json title="./packages/math/package.json"
+{
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts"
+}
+```
+
+<Callout type="info">
+
+`cjs`과 `esm` 둘 다에 번들링할 필요는 없습니다. 그러나 패키지를 더 다양한 환경에서 사용할 수 있으므로 권장됩니다.
+
+`main`, `module` 및 `types`을 사용하여 오류가 발생하는 경우 [tsup 문서](https://tsup.egoist.dev/#bundle-formats)를 살펴보세요.
+
+번들링은 복잡한 주제이므로 여기에서 모든 내용을 다룰 공간이 없습니다!
+
+</Callout>
+
+### 앱을 만들기 전에 패키지를 빌드하세요.
+
+`turbo run build`을 실행하기 전에 고려해야 할 사항이 한 가지 있습니다. 방금 모노레포에 [작업 종속성](/docs/crafting-your-repository/running-tasks)을 추가했습니다. `packages/math`의 `build`은 `apps/web`의 `build`보다 **앞에** 실행되어야 합니다.
+
+다행히 [`dependsOn`](/docs/reference/configuration#dependson)를 사용하여 이를 쉽게 구성할 수 있습니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"]
+    }
+  }
+}
+```
+
+이제 `turbo run build`을 실행할 수 있으며, 앱을 빌드하기 _전에_ 자동으로 패키지를 빌드합니다.
+
+### 개발 스크립트 설정
+
+설정에 작은 문제가 있습니다. 우리는 패키지를 잘 구축하고 있지만 개발에서는 제대로 작동하지 않습니다. `@repo/math` 패키지에 대한 변경 사항이 앱에 반영되지 않습니다.
+
+작업하는 동안 패키지를 다시 빌드하기 위한 `dev` 스크립트가 없기 때문입니다. 우리는 쉽게 하나를 추가할 수 있습니다:
+
+```json title="./packages/math/package.json"
+// [!코드 단어:--watch]{
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch"
+  }
+}
+```
+
+이는 `--watch` 플래그를 `tsup`으로 전달합니다. 이는 파일 변경 사항을 감시한다는 의미입니다.
+
+`turbo.json`에 [개발 스크립트](/docs/crafting-your-repository/developing-applications#configuring-development-tasks)를 이미 설정한 경우 `turbo run dev`을 실행하면 `packages/math` 개발 작업이 `apps/web` 개발 작업과 병렬로 실행됩니다.
+
+우리 패키지는 이제 npm 배포를 고려할 수 있는 위치에 있습니다. [버전 관리 및 게시](#versioning-and-publishing) 섹션에서 해당 작업을 수행하겠습니다.
+
+## 버전 관리 및 게시
+
+모노레포에서 수동으로 패키지 버전을 관리하고 게시하는 것은 번거로울 수 있습니다. 다행히도 작업을 쉽게 해주는 도구인 [Changesets](https://github.com/changesets/changesets) CLI가 있습니다.
+
+사용이 직관적이고 Turborepo와 마찬가지로 이미 익숙한 monorepo 도구에 적합하기 때문에 Changesets를 권장합니다.
+
+몇 가지 대안은 다음과 같습니다.
+
+- [intuit/auto](https://github.com/intuit/auto) - 풀 요청의 의미론적 버전 라벨을 기반으로 릴리스 생성
+- [microsoft/beachball](https://github.com/microsoft/beachball) - 가장 의미 있는 버전 범퍼
+
+## 출판
+
+패키지가 번들로 묶이고 나면 이를 npm 레지스트리에 게시할 수 있습니다.
+
+Changesets 문서를 살펴보는 것이 좋습니다. 권장되는 읽기 순서는 다음과 같습니다.
+
+1. [체인지셋을 사용하는 이유](https://github.com/changesets/changesets/blob/main/docs/intro-to-using-changesets.md) - 기본 사항을 안내하는 소개입니다.
+1. [설치 지침](https://github.com/changesets/changesets/blob/main/packages/cli/README.md)
+1. GitHub를 사용하는 경우 [Changeset GitHub 봇](https://github.com/apps/changeset-bot) 사용을 고려하세요. 이 봇은 PR에 변경 세트를 추가하도록 안내하는 봇입니다.
+1. 게시를 매우 쉽게 만들어주는 도구인 [Changesets GitHub 작업](https://github.com/changesets/action) 추가도 고려해야 합니다.
+
+## Turborepo에서 변경 세트 사용
+
+Changeset 사용을 시작하면 세 가지 유용한 명령에 액세스할 수 있습니다.
+
+```bash title="Terminal"
+# 새 변경 세트 추가changeset
+
+# 새 버전의 패키지 생성changeset version
+
+# 변경된 모든 패키지를 npm에 게시changeset publish
+```
+
+게시 흐름을 Turborepo에 연결하면 배포를 훨씬 더 간단하고 빠르게 구성할 수 있습니다.
+
+`changeset version`의 변경 사항을 자동으로 커밋하도록 변경 세트를 구성하는 것이 좋습니다.
+
+```json title="./.changeset/config.json"
+{
+  // …  "commit": true
+  // …}
+```
+
+`publish-packages` 스크립트를 루트 `package.json`에 추가합니다.
+
+```json title="./package.json"
+{
+  "scripts": {
+    // 빌드, 린트, 테스트 포함 - 실행에 필요한 모든 것    // 출판하기 전에    "publish-packages": "turbo run build lint test && changeset version && changeset publish"
+  }
+}
+```
+
+패키지가 공개인 경우 Changeset의 `access`을 `public`으로 설정합니다.
+
+```json title="./.changeset/config.json"
+{
+  // …  "access": "public"
+  // …}
+```
+
+<Callout type="info">
+  npm과 충돌하지 않도록 `publish-packages`을 권장합니다.
+ 내장된 `publish` 스크립트.
+</Callout>
+
+이는 `publish-packages`을 실행하면 모노레포가 구축, 린트, 테스트 및 게시되며 Turborepo의 모든 속도 향상 혜택을 누릴 수 있음을 의미합니다.

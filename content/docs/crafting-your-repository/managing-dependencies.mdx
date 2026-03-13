@@ -1,0 +1,236 @@
+---
+title: 종속성 관리
+description: 모노레포의 작업공간에서 종속성을 관리하는 방법을 알아보세요.
+product: turborepo
+type: guide
+summary: 작업 영역의 패키지 전반에 걸쳐 외부 및 내부 종속성을 설치, 구성 및 유지 관리합니다.
+prerequisites:
+- /docs/crafting-your-repository/structuring-a-repository
+related:
+- /docs/crafting-your-repository/creating-an-internal-package
+- /docs/core-concepts/internal-packages
+---
+
+- **외부 종속성**은 [npm 레지스트리](https://www.npmjs.com/)에서 제공되므로 생태계의 귀중한 코드를 활용하여 애플리케이션과 라이브러리를 더 빠르게 구축할 수 있습니다.
+- **내부 종속성**을 사용하면 저장소 내에서 기능을 공유할 수 있으므로 공유 코드의 검색 가능성과 유용성이 크게 향상됩니다. 내부 패키지를 빌드하는 방법은 [다음 가이드](/docs/crafting-your-repository/creating-an-internal-package)에서 논의하겠습니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+```json title="./apps/web/package.json"
+{
+  "dependencies": {
+    "next": "latest", // External dependency
+    "@repo/ui": "workspace:*" // Internal dependency
+  }
+}
+```
+</Tab>
+
+<Tab value="yarn">
+```json title="./apps/web/package.json"
+{
+  "dependencies": {
+    "next": "latest", // External dependency
+    "@repo/ui": "*" // Internal dependency
+  }
+}
+```
+</Tab>
+
+<Tab value="npm">
+```json title="./apps/web/package.json"
+{
+  "dependencies": {
+    "next": "latest", // External dependency
+    "@repo/ui": "*" // Internal dependency
+  }
+}
+```
+</Tab>
+
+<Tab value="bun">
+```json title="./apps/web/package.json"
+{
+  "dependencies": {
+    "next": "latest", // External dependency
+    "@repo/ui": "workspace:*" // Internal dependency
+  }
+}
+```
+</Tab>
+</PackageManagerTabs>
+
+## 종속성 설치 모범 사례
+
+### 사용되는 곳에 종속 항목 설치
+
+저장소에 종속성을 설치할 때 이를 사용하는 패키지에 직접 설치해야 합니다. 패키지의 `package.json`에는 패키지에 필요한 모든 종속성이 포함됩니다. 이는 외부 종속성과 내부 종속성 모두에 해당됩니다.
+
+<Callout type="info">
+  패키지 관리자가 [다른 node_modules를 사용하도록 선택할 수 있습니다.
+ 패키지](#node_modules-locations)보다 위치가 다릅니다.
+</Callout>
+
+여러 패키지에 종속성을 빠르게 설치하려면 패키지 관리자를 사용할 수 있습니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm add jest --save-dev --recursive --filter=web --filter=@repo/ui --filter=docs
+```
+
+<LinkToDocumentation href="https://pnpm.io/cli/recursive" text="pnpm 문서" />
+</Tab>
+
+<Tab value="yarn">
+원사 1:
+
+```bash title="Terminal"
+yarn workspace web add jest --dev
+yarn workspace @repo/ui add jest --dev
+```
+
+<LinkToDocumentation href="https://classic.yarnpkg.com/en/docs/cli/add" text="원사 1 문서" />
+
+실 2+:
+
+```bash title="Terminal"
+yarn workspaces foreach -R --from '{web,@repo/ui}' add jest --dev
+```
+
+<LinkToDocumentation href="https://yarnpkg.com/cli/workspaces/foreach#usage" text="Yarn 2+ 문서" />
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npm install jest --workspace=web --workspace=@repo/ui --save-dev
+```
+
+<LinkToDocumentation href="https://docs.npmjs.com/cli/v7/using-npm/config#workspace" text="npm 문서" />
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+cd apps/web && bun install jest --dev
+cd packages/ui && bun install jest --dev
+```
+
+<LinkToDocumentation href="https://bun.sh/docs/install/workspaces" text="롤빵 문서" />
+</Tab>
+</PackageManagerTabs>
+
+이 방법에는 여러 가지 이점이 있습니다.
+
+- **명확성 향상**: 종속성이 `package.json`에 나열되면 패키지가 무엇에 의존하는지 이해하기가 더 쉽습니다. 저장소에서 작업하는 개발자는 패키지 내에서 어떤 종속성이 사용되는지 한눈에 확인할 수 있습니다.
+- **향상된 유연성**: 대규모 모노레포에서는 각 패키지가 동일한 버전의 외부 종속성을 사용한다고 기대하는 것이 비현실적일 수 있습니다. 동일한 코드베이스에서 작업하는 팀이 많으면 [규모에 따른 운영](https://vercel.com/blog/how-to-scale-a-large-codebase)의 현실로 인해 우선순위, 타임라인, 요구사항이 서로 다를 수 있습니다. 이를 사용하는 패키지에 종속성을 설치하면 `ui` 팀이 최신 버전의 TypeScript를 사용할 수 있게 하고, `web` 팀은 새로운 기능을 제공하고 나중에 TypeScript를 적용하는 데 우선순위를 둘 수 있습니다. 또한 종속성 버전을 계속 동기화하고 싶다면 [그렇게 할 수도 있습니다](#keeping-dependencies-on-the-same-version).
+- **더 나은 캐싱 기능**: 저장소 루트에 너무 많은 종속성을 설치하면 종속성을 추가, 업데이트 또는 삭제할 때마다 작업공간 루트가 변경되어 불필요한 캐시 누락이 발생하게 됩니다.
+- **사용하지 않는 종속성 정리**: Docker 사용자의 경우 [Turborepo의 정리 기능](/docs/reference/prune)을 사용하면 Docker 이미지에서 사용되지 않는 종속성을 제거하여 더 가벼운 이미지를 만들 수 있습니다. 종속성이 해당 패키지에 설치되면 Turborepo는 잠금 파일을 읽고 필요한 패키지에서 사용되지 않는 종속성을 제거할 수 있습니다.
+
+### 루트에 종속성이 거의 없음
+
+위의 첫 번째 원칙에 따라 [사용되는 패키지에 종속성을 설치](#install-dependencies-where-theyre-used)하면 자연스럽게 작업공간 루트에 종속성이 거의 없다는 것을 알게 될 것입니다.
+
+작업공간 루트에 속하는 유일한 종속성은 **저장소 관리용 도구**인 반면, 애플리케이션 및 라이브러리 구축을 위한 종속성은 해당 패키지에 설치됩니다. 루트에 설치하는 것이 적합한 종속성의 몇 가지 예는 [`turbo`](https://www.npmjs.com/package/turbo), [`husky`](https://www.npmjs.com/package/husky) 또는 [`lint-staged`](https://www.npmjs.com/package/lint-staged)입니다.
+
+## 종속성 관리
+
+### Turborepo는 종속성을 관리하지 않습니다.
+
+Turborepo는 종속성을 관리하는 역할을 수행하지 않으며 해당 작업은 선택한 패키지 관리자에게 맡깁니다.올바른 외부 종속성 버전 다운로드, 심볼릭 링크 및 모듈 확인과 같은 작업을 처리하는 것은 패키지 관리자의 몫입니다. 이 페이지의 권장 사항은 작업공간에서 종속성을 관리하기 위한 모범 사례이며 Turborepo에서는 적용되지 않습니다.
+
+### 모듈 해상도는 패키지 관리자마다 다릅니다.
+
+패키지 관리자는 서로 다른 모듈 확인 알고리즘을 사용하므로 예측하기 어려울 수 있는 동작의 차이가 발생합니다.
+
+Turborepo 문서에서는 패키지 관리자의 예상 동작에 따라 많은 권장 사항을 제공합니다. 종속성을 처리하는 방법에 대한 우리의 범위는 최선의 노력이며 패키지 관리자 또는 저장소의 요구 사항에 맞게 문서화된 동작을 조정해야 할 수도 있습니다.
+
+그러나 문서에서 모든 패키지 관리자 또는 특정 패키지 관리자에 대해 전체적으로 잘못된 것으로 보이는 문제를 발견한 경우 개선할 수 있도록 GitHub 문제를 통해 알려주시기 바랍니다.
+
+### node_modules 위치
+
+선택한 패키지 관리자, 버전, 설정 및 작업공간에서 종속성이 설치된 위치에 따라 작업공간 내의 다양한 위치에서 `node_modules` 및 그 내부의 종속성을 볼 수 있습니다. 종속성은 루트 `node_modules`, 패키지의 `node_modules` 또는 둘 다에서 찾을 수 있습니다.
+
+스크립트와 작업이 필요한 종속성을 찾을 수 있는 한 패키지 관리자는 올바르게 작동하고 있는 것입니다.
+
+<Callout type="info" title="코드에서 `node_modules` 참조">
+작업공간 내 `node_modules`의 특정 위치는 패키지 관리자의 공개 API의 일부가 아닙니다. 즉, `node_modules`을 직접 참조(예: `node ./node_modules/a-package/dist/index.js`)하는 것은 취약할 수 있습니다. 디스크에 대한 종속성 위치는 작업공간 주변의 다른 종속성 변경에 따라 변경될 수 있기 때문입니다.
+
+대신, 가능할 때마다 종속성 모듈에 액세스하려면 Node.js 생태계의 규칙을 따르세요.
+
+</Callout>
+
+### 동일한 버전에 대한 종속성 유지
+
+일부 모노레포 관리자는 규칙에 따라 모든 패키지에서 동일한 버전에 대한 종속성을 유지하는 것을 선호합니다. 이를 달성하는 방법에는 여러 가지가 있습니다.
+
+#### 특수 제작 도구 사용
+
+이러한 특정 목적을 위해 [`syncpack`](https://www.npmjs.com/package/syncpack), [`manypkg`](https://www.npmjs.com/package/@manypkg/cli) 및 [`sherif`](https://www.npmjs.com/package/sherif)와 같은 도구를 사용할 수 있습니다.
+
+#### 패키지 관리자 사용
+
+패키지 관리자를 사용하여 하나의 명령으로 종속성 버전을 업데이트할 수 있습니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm up --recursive typescript@latest
+```
+
+<small>[-> pnpm 문서](https://pnpm.io/cli/update#--recursive--r)</small>
+
+</Tab>
+
+<Tab value="yarn">
+원사 1:
+```bash title="Terminal"
+yarn upgrade-interactive --latest
+```
+<small>[-> Yarn 1 문서](https://classic.yarnpkg.com/en/docs/cli/upgrade-interactive)</small>
+
+실 2+:
+
+```bash title="Terminal"
+yarn upgrade typescript@latest --upgrade
+```
+
+<small>[-> Yarn 2+ 문서](https://yarnpkg.com/cli/up)</small>
+
+</Tab>
+
+<Tab value="npm">
+```bash title="Terminal"
+npm install typescript@latest --workspaces
+```
+  <small>[-> npm 문서](https://docs.npmjs.com/cli/v7/using-npm/config#workspaces)</small>
+
+</Tab>
+
+<Tab value="bun">
+상응하는 항목 없음
+
+<small>[-> Bun 문서](https://bun.sh/docs/install/workspaces)</small>
+
+</Tab>
+</PackageManagerTabs>
+
+#### pnpm 카탈로그
+
+pnpm v9.5+에서는 카탈로그를 사용하여 종속성 버전 범위를 재사용 가능한 상수로 정의할 수 있습니다. 이렇게 하면 작업공간 전체에서 동일한 값을 참조하므로 동일한 버전에 대한 종속성이 유지됩니다.
+
+자세히 알아보려면 [pnpm 카탈로그 문서를 방문하세요](https://pnpm.io/catalogs).
+
+#### IDE 사용
+
+IDE의 리팩토링 도구는 저장소의 모든 `package.json` 파일에서 종속성 버전을 한 번에 찾아서 바꿀 수 있습니다. `package.json` 파일에서 `"next": ".*"`과 같은 정규식을 사용하여 `next` 패키지의 모든 인스턴스를 찾아 원하는 버전으로 바꿔보세요. 완료되면 패키지 관리자의 설치 명령을 실행하여 잠금 파일을 업데이트하세요.
+
+## 다음 단계
+
+이제 작업공간에서 종속성을 효과적으로 관리하는 방법을 알았으므로 모노레포에서 종속성으로 사용할 [내부 패키지 생성](/docs/crafting-your-repository/creating-an-internal-package)을 살펴보겠습니다.

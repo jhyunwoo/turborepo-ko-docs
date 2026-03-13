@@ -1,0 +1,158 @@
+---
+title: 저장소 이해
+description: Turborepo를 사용하여 저장소 구조를 이해하는 방법을 알아보세요.
+product: turborepo
+type: guide
+summary: Turbo devtools, ls, run 및 query를 사용하여 monorepo의 패키지 및 작업 그래프를 시각화하고 검사하세요.
+related:
+- /docs/core-concepts/package-and-task-graph
+- /docs/crafting-your-repository/running-tasks
+- /docs/reference/devtools
+---
+
+Turborepo에는 저장소 구조를 이해하는 도구가 포함되어 있어 코드베이스를 사용하고 최적화하는 데 도움이 됩니다.
+
+## `turbo devtools`
+
+`turbo devtools`은 패키지 그래프의 브라우저 기반 시각화를 제공합니다. 이 도구는 작업 그래프 문제를 진단하고 모노레포의 구조를 이해하는 데 도움이 될 수 있습니다.
+
+```bash title="Terminal"
+turbo devtools
+```
+
+자세한 내용은 [참조 문서](/docs/reference/devtools)를 참조하세요.
+
+## `turbo ls`
+
+패키지를 나열하려면 `turbo ls`을 실행하면 됩니다. 그러면 저장소에 있는 패키지와 해당 패키지의 위치가 표시됩니다.
+
+```bash title="Terminal"
+> turbo ls
+
+  @repo/eslint-config packages/eslint-config
+  @repo/typescript-config packages/typescript-config
+  @repo/ui packages/ui
+  docs apps/docs
+  web apps/web
+```
+
+`run`처럼 `ls`에 [필터를 적용](/docs/crafting-your-repository/running-tasks#using-filters)할 수 있습니다.
+
+```bash title="Terminal"
+> turbo ls --filter ...ui
+3 packages (pnpm9)
+
+  @repo/ui packages/ui
+  docs apps/docs
+  web apps/web
+```
+
+## `turbo run`
+
+모노레포에서 실행할 수 있는 작업을 결정하려면 작업 없이 `turbo run`을 호출하면 됩니다. 다음 목록을 받게 됩니다.
+작업 및 해당 작업이 정의된 패키지:
+
+```bash title="Terminal"
+> turbo run
+No tasks provided, here are some potential ones
+
+  lint
+    @repo/ui, docs, web
+  build
+    docs, web
+  dev
+    docs, web
+  start
+    docs, web
+  generate:component
+    @repo/ui
+```
+
+## `turbo query`
+
+저장소 구조를 자세히 알아보고 싶다면 `2.2.0`부터 Turborepo가 저장소에 GraphQL 인터페이스를 제공합니다.
+`turbo query`을 통해. `test` 작업이 있는 모든 패키지를 찾는 등의 쿼리를 실행할 수 있습니다.
+
+```bash title="Terminal"
+> turbo query "query { packages(filter: { has: { field: TASK_NAME, value: \"build\"}}) { items { name } } }"
+{
+  "data": {
+    "packages": {
+      "items": [
+        {
+          "name": "//"
+        },
+        {
+          "name": "docs"
+        },
+        {
+          "name": "web"
+        }
+      ]
+    }
+  }
+}
+```
+
+이는 패키지 또는 작업 종속성 그래프의 잠재적인 문제를 진단하는 데 도움이 될 수 있습니다. 예를 들어,
+빌드에서 캐시 누락이 많이 발생하고 있습니다. 계속해서 변경되는 패키지가 있기 때문일 수 있습니다.
+코드베이스 전체에서 가져옵니다.
+
+이를 위해 쿼리를 실행하여 모노레포에서 10회 이상 직접 가져온 패키지를 찾을 수 있습니다.
+
+```bash title="Terminal"
+> turbo query "query { packages(filter: { greaterThan: { field: DIRECT_DEPENDENT_COUNT, value: 10 } }) { items { name } } }"
+{
+  "data": {
+    "packages": {
+      "items": [
+        {
+          "name": "utils"
+        }
+      ]
+    }
+  }
+}
+```
+
+이제 이 패키지를 찾았으므로 작은 변경 사항이 발생하지 않도록 더 작은 패키지로 분할해 볼 수 있습니다.
+전체 종속성 그래프를 무효화합니다.
+
+또는 새로운 `--affected` 플래그를 사용하고 있지만 여전히 원하는 것보다 더 많은 작업을 실행하고 있다고 가정해 보겠습니다.
+`turbo query`을 사용하면 모든 패키지와 패키지가 무효화된 이유를 찾을 수 있습니다.
+
+```bash title="Terminal"
+> turbo query "query { affectedPackages(base: \"HEAD^\", head: \"HEAD\") { items { reason {  __typename } } } }"
+{
+  "data": {
+    "affectedPackages": {
+      "items": [
+        {
+          "name": "utils",
+          "reason": {
+            "__typename": "FileChanged"
+          }
+        },
+        {
+          "name": "web",
+          "reason": {
+            "__typename": "DependencyChanged"
+          }
+        },
+        {
+          "name": "docs",
+          "reason": {
+            "__typename": "DependencyChanged"
+          }
+        },
+        {
+          "name": "cli",
+          "reason": {
+            "__typename": "DependencyChanged"
+          }
+        },
+      ]
+    }
+  }
+}
+```

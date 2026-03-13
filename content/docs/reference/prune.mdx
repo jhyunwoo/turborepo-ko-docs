@@ -1,0 +1,222 @@
+---
+title: 치다
+description: '`turbo prune` 명령에 대한 API 참조'
+product: turborepo
+type: reference
+summary: 대상 패키지에 대한 부분 모노레포를 생성하는 `turbo prune` 명령에 대한 모든 플래그 및 옵션입니다.
+related:
+- /docs/reference/run
+---
+
+대상 패키지에 대한 부분 모노레포를 생성합니다. 출력은 다음을 포함하는 `out` 디렉터리에 저장됩니다.
+
+- 타겟을 빌드하는 데 필요한 모든 내부 패키지의 전체 소스 코드입니다.
+- 타겟을 빌드하는 데 필요한 원래 잠금 파일의 하위 집합을 포함하는 정리된 잠금 파일입니다.
+- 루트 `package.json`의 복사본.
+
+```bash title="Terminal"
+turbo prune [package]
+```
+
+### 예
+
+다음 구조의 저장소로 시작합니다.
+
+<Files>
+  <File name="패키지.json" />
+  <File name="pnpm-lock.yaml" />
+  <Folder name="앱" defaultOpen>
+    <Folder name="관리자">
+      <File name="패키지.json" />
+      <File name="다음 환경.d.ts" />
+      <File name="다음.config.js" />
+      <Folder name="소스">
+        <Folder name="앱">
+          <File name="페이지.tsx" />
+        </Folder>
+      </Folder>
+      <File name="tsconfig.json" />
+    </Folder>
+    <Folder name="프런트엔드">
+      <File name="패키지.json" />
+      <File name="다음 환경.d.ts" />
+      <File name="다음.config.js" />
+      <Folder name="소스">
+        <Folder name="앱">
+          <File name="페이지.tsx" />
+        </Folder>
+      </Folder>
+      <File name="tsconfig.json" />
+    </Folder>
+  </Folder>
+  <Folder name="패키지" defaultOpen>
+    <Folder name="스크립트">
+      <File name="패키지.json" />
+      <Folder name="소스">
+        <File name="index.tsx" />
+      </Folder>
+      <File name="tsconfig.json" />
+    </Folder>
+    <Folder name="공유됨">
+      <File name="패키지.json" />
+      <Folder name="소스">
+        <Folder name="__테스트__">
+          <File name="sum.test.ts" />
+          <File name="tsconfig.json" />
+        </Folder>
+        <File name="index.ts" />
+        <File name="합계.ts" />
+      </Folder>
+      <File name="tsconfig.json" />
+    </Folder>
+    <Folder name="UI">
+      <File name="패키지.json" />
+      <Folder name="소스">
+        <File name="index.tsx" />
+      </Folder>
+      <File name="tsconfig.json" />
+    </Folder>
+    <Folder name="유틸리티">
+      <File name="패키지.json" />
+      <Folder name="소스">
+        <File name="index.tsx" />
+      </Folder>
+      <File name="tsconfig.json" />
+    </Folder>
+  </Folder>
+</Files>
+
+`turbo prune frontend`을 실행하여 `out` 디렉터리에 `frontend` 애플리케이션에 대한 정리된 작업 공간을 생성합니다.
+
+<Files>
+  <File name="패키지.json" />
+  <File name="pnpm-lock.yaml(일부)" />
+  <Folder name="앱" defaultOpen>
+    <Folder name="프런트엔드">
+      <File name="패키지.json" />
+      <File name="다음 환경.d.ts" />
+      <File name="다음.config.js" />
+      <Folder name="소스">
+        <Folder name="앱">
+          <File name="페이지.tsx" />
+        </Folder>
+      </Folder>
+      <File name="tsconfig.json" />
+    </Folder>
+  </Folder>
+  <Folder name="패키지" defaultOpen>
+    <Folder name="공유됨">
+      <File name="패키지.json" />
+      <Folder name="소스">
+        <Folder name="__테스트__">
+          <File name="sum.test.ts" />
+          <File name="tsconfig.json" />
+        </Folder>
+        <File name="index.ts" />
+        <File name="합계.ts" />
+      </Folder>
+      <File name="tsconfig.json" />
+    </Folder>
+    <Folder name="UI">
+      <File name="패키지.json" />
+      <Folder name="소스">
+        <File name="index.tsx" />
+      </Folder>
+      <File name="tsconfig.json" />
+    </Folder>
+  </Folder>
+</Files>
+
+### 옵션
+
+#### `--docker`
+
+기본값은 `false`입니다.
+
+[Docker 모범 사례 및 레이어 캐싱](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)을 통해 더 쉽게 사용할 수 있도록 출력 디렉터리를 변경하세요. 디렉토리에는 다음이 포함됩니다.
+
+- 정리된 작업 공간의 `package.json` 파일이 포함된 `json` 폴더입니다.
+- 타겟을 빌드하는 데 필요한 내부 패키지에 대한 정리된 작업공간의 전체 소스 코드가 포함된 `full` 폴더입니다.
+- 타겟을 빌드하는 데 필요한 원래 잠금 파일의 하위 집합을 포함하는 정리된 잠금 파일입니다.
+
+위와 동일한 예를 사용하여 `turbo prune frontend --docker`을 실행하면 다음이 생성됩니다.
+
+<Files>
+  <File name="pnpm-lock.yaml(일부)" />
+  <Folder name="가득한" defaultOpen>
+    <File name="package.json(repo 루트에서)" />
+    <Folder name="앱">
+      <Folder name="프런트엔드">
+        <File name="패키지.json" />
+        <File name="다음 환경.d.ts" />
+        <File name="다음.config.js" />
+        <Folder name="소스">
+          <Folder name="앱">
+            <File name="페이지.tsx" />
+          </Folder>
+        </Folder>
+        <File name="tsconfig.json" />
+      </Folder>
+    </Folder>
+    <Folder name="패키지">
+      <Folder name="공유됨">
+        <File name="패키지.json" />
+        <Folder name="소스">
+          <Folder name="__테스트__">
+            <File name="sum.test.ts" />
+            <File name="tsconfig.json" />
+          </Folder>
+          <File name="index.ts" />
+          <File name="합계.ts" />
+        </Folder>
+        <File name="tsconfig.json" />
+      </Folder>
+      <Folder name="UI">
+        <File name="패키지.json" />
+        <Folder name="소스">
+          <File name="index.tsx" />
+        </Folder>
+        <File name="tsconfig.json" />
+      </Folder>
+    </Folder>
+  </Folder>
+  <Folder name="JSON" defaultOpen>
+    <File name="package.json(repo 루트에서)" />
+    <Folder name="앱" defaultOpen>
+      <Folder name="프런트엔드" defaultOpen>
+        <File name="패키지.json" />
+      </Folder>
+    </Folder>
+    <Folder name="패키지" defaultOpen>
+      <Folder name="UI" defaultOpen>
+        <File name="패키지.json" />
+      </Folder>
+      <Folder name="공유됨" defaultOpen>
+        <File name="패키지.json" />
+      </Folder>
+    </Folder>
+
+  </Folder>
+</Files>
+
+#### `--out-dir <path>`
+
+기본값은 `./out`입니다.
+
+정리된 출력이 생성되는 디렉터리를 사용자 지정합니다.
+
+#### `--use-gitignore[=<bool>]`
+
+기본값: `true`
+
+파일을 출력 디렉터리에 복사할 때 `.gitignore` 파일을 존중하세요.
+
+### `pnpm deploy`과 비교
+
+`turbo prune` 및 [`pnpm deploy`](https://pnpm.io/cli/deploy)은 모두 단일 저장소에서 패키지를 격리하는 데 사용되지만 서로 다른 목적으로 사용되며 서로 다른 출력을 생성합니다.
+
+`turbo prune`이 부분 모노레포를 생성하는 경우 `pnpm deploy`은 대상 패키지의 콘텐츠만 포함하는 디렉터리를 생성합니다.
+
+`pnpm deploy` 생성된 디렉터리에는 하드 링크된 내부 종속성이 있는 자체 포함된 `node_modules`이 있습니다.
+그러면 추가 단계 없이 서버에 직접 복사하여 사용할 수 있는 이식 가능한 패키지가 생성됩니다.
+독립 실행형 배포 가능 패키지를 생성하는 데 중점을 두기 때문에 저장소 구조는 유지되지 않습니다.

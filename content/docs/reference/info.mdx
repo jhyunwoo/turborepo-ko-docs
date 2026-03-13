@@ -1,0 +1,37 @@
+---
+title: 정보
+description: '`turbo info` 명령에 대한 API 참조'
+product: turborepo
+type: reference
+summary: Turborepo 설정에 대한 디버깅 정보를 인쇄하는 `turbo info` 명령에 대한 참조입니다.
+---
+
+Turborepo에 대한 디버깅 정보를 인쇄합니다.
+
+```bash title="Terminal"
+turbo info
+```
+
+예제 출력:
+
+```txt title="Terminal"
+CLI:
+   Version: 2.3.0
+   Path to executable: /path/to/turbo
+   Daemon status: Running
+   Package manager: pnpm
+
+Platform:
+   Architecture: aarch64
+   Operating system: macos
+   Available memory (MB): 12810
+   Available CPU cores: 10
+
+Environment:
+   CI: None
+   Terminal (TERM): xterm-256color
+   Terminal program (TERM_PROGRAM): tmux
+   Terminal program version (TERM_PROGRAM_VERSION): 3.4
+   Shell (SHELL): /bin/zsh
+   stdin: false
+```

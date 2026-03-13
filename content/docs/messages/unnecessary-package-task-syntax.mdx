@@ -1,0 +1,46 @@
+---
+title: 불필요한 패키지 작업 구문 오류
+description: Turborepo의 불필요한 패키지 작업 구문으로 인한 오류에 대해 자세히 알아보세요.
+product: turborepo
+type: troubleshooting
+summary: 패키지 수준 Turbo.json에서 불필요한 `package#task` 구문 사용으로 인한 오류를 수정하는 방법입니다.
+related:
+- /docs/reference/package-configurations
+- /docs/reference/configuration
+---
+
+## 이 오류가 발생한 이유
+
+Turborepo는 패키지 디렉터리에 추가 `turbo.json` 파일 추가를 지원합니다.
+저장소 루트에 선언된 `turbo.json` 파일을 재정의하려면 [작업공간 구성](/docs/crafting-your-repository/structuring-a-repository#specifying-packages-in-a-monorepo)이라는 기능을 사용하세요.
+추가 `turbo.json` 파일에서는 해당 특정 작업에 대해서만 작업을 구성할 수 있습니다.
+패키지. 따라서 태스크에는 태스크 이름만 포함되어야 하며,
+패키지 및 작업 이름(`package#task`)이 아닙니다.
+
+`apps/web` 디렉토리의 `turbo.json` 파일:
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "web#build": {
+      "dependsOn": ["lint"]
+    }
+  }
+}
+```
+
+이 `turbo.json` 파일은 패키지 디렉터리 내에 있으므로 `web` 접두사가 필요하지 않습니다.
+
+## 솔루션
+
+작업 이름에서 패키지 접두사를 제거합니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["lint"]
+    }
+  }
+}
+```

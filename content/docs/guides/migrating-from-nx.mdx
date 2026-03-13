@@ -1,0 +1,549 @@
+---
+title: Nx에서 마이그레이션
+description: Nx에서 Turborepo로 마이그레이션하는 방법을 알아보세요.
+product: turborepo
+type: guide
+summary: Nx 모노레포를 Turborepo로 마이그레이션하기 위한 단계별 지침입니다.
+prerequisites:
+- /docs/crafting-your-repository/structuring-a-repository
+related:
+- /docs/guides/multi-language
+---
+
+이 가이드는 기존 Nx 저장소를 Turborepo로 마이그레이션하는 데 도움이 됩니다.
+
+- [Nx 스타터에서 Turborepo로 마이그레이션](#migration-steps)의 주요 개념 살펴보기
+- [더 복잡한 마이그레이션 시나리오](#advanced-migration-considerations)에 대한 고려 사항
+
+## 전환하는 이유는 무엇입니까?
+
+Nx에서 Turborepo로 마이그레이션하는 데에는 여러 가지 이유가 있습니다. 아래에는 개발자가 마이그레이션을 위해 언급한 가장 일반적인 동기가 나열되어 있습니다.
+
+### 생태계 표준 사용
+
+Turborepo의 목표는 저장소를 정보 소스로 활용하여 경량화하는 것입니다. 이에 대한 예는 JavaScript/TypeScript 지원을 위해 [JavaScript 패키지 관리자 작업 공간 위에 구축됨](/docs/crafting-your-repository/structuring-a-repository)인 Turborepo입니다.
+
+반대로 Nx는 플러그인, 종속성 및 기타 Nx 관련 코드 계층을 사용하여 저장소에 대한 정보를 추론합니다. 이러한 플러그인은 기능 계층을 제공할 수 있고 선택 사항이지만 마이그레이션을 원하는 Nx 사용자는 변경의 주요 동기로 코드 베이스에서 Nx 관련 코드를 제거하는 것을 종종 언급합니다.
+
+### 소스 코드에 대한 통제력 강화
+
+Nx의 철학에는 플러그인, 종속성 및 Nx 관련 코드의 계층으로 코드를 래핑하는 것이 포함됩니다. 이러한 코드 레이어는 선택 사항이지만 Nx의 많은 가치를 제공하고 Nx에서 권장하므로 대부분의 Nx 저장소에 해당 레이어가 있습니다. Turborepo로 마이그레이션할 때 많은 개발자는 이러한 계층이 저장소를 제어에서 멀리 추상화하는 난독화 계층을 생성하여 문제를 일으키는 경향이 있다고 설명합니다.
+
+Turborepo는 원하는 대로 도구를 구성(또는 구성하지 않음)하여 원하는 방식으로 도구를 처리할 수 있도록 선택합니다.
+
+### 저장소 관리자에 대한 구성 감소
+
+Turborepo로 마이그레이션하려면 Nx에 대한 이전 구성을 삭제하고 이를 Turborepo에 대한 더 적은 구성으로 교체해야 할 수 있습니다. Turborepo가 저장소의 요구 사항을 자동으로 추론하기 때문입니다. 예를 들어, 아래 [마이그레이션 단계](#migration-steps)에서 사용하는 Turborepo와 Nx의 동등한 스타터에는 다음과 같은 도구별 구성이 있습니다.
+
+<Tabs items={["Turborepo", "Nx"]}>
+
+<Tab value="Turborepo">
+
+```json title="turbo.json"
+{
+  "$schema": "/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
+```
+
+</Tab>
+
+<Tab value="Nx">
+
+```json title="nx.json"
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.cjs",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/test-setup.[jt]s"
+    ],
+    "sharedGlobals": ["{workspaceRoot}/.github/workflows/ci.yml"]
+  },
+  "nxCloudId": "6789ec521d90a2165398f39a",
+  "plugins": [
+    {
+      "plugin": "@nx/next/plugin",
+      "options": {
+        "startTargetName": "start",
+        "buildTargetName": "build",
+        "devTargetName": "dev",
+        "serveStaticTargetName": "serve-static"
+      }
+    },
+    {
+      "plugin": "@nx/playwright/plugin",
+      "options": {
+        "targetName": "e2e"
+      }
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      }
+    },
+    {
+      "plugin": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      }
+    }
+  ],
+  "targetDefaults": {
+    "e2e-ci--**/*": {
+      "dependsOn": ["^build"]
+    }
+  },
+  "generators": {
+    "@nx/next": {
+      "application": {
+        "style": "tailwind",
+        "linter": "eslint"
+      }
+    }
+  }
+}
+```
+
+```json title="project.json"
+{
+  "name": "starter",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/starter",
+  "projectType": "application",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project starter --web",
+  "targets": {}
+}
+```
+
+</Tab>
+
+</Tabs>
+
+## 마이그레이션 단계
+
+이 마이그레이션의 목표는 Turborepo 작업을 최대한 빨리 완료하여 Turborepo 기능을 점진적으로 채택할 수 있도록 하는 것입니다. 먼저 Nx 스캐폴더를 사용하여 Next.js 앱으로 저장소를 생성하겠습니다.
+
+```bash title="Terminal"
+npx create-nx-workspace --preset=next --ci=skip --e2eTestRunner=none --style=tailwind --nextAppDir=true --nextSrcDir=false --packageManager=pnpm --appName=starter
+```
+
+### 1단계: .gitignore 업데이트
+
+Turborepo는 .turbo 디렉토리를 사용하여 저장소에 대한 로컬 캐시 및 기타 정보를 보관합니다. 따라서 이 디렉터리를 `.gitignore`에 추가해야 합니다.
+
+```txt title=".gitignore"
+.turbo
+```
+
+### 2단계: 작업 영역 정의 추가
+
+Turborepo는 JavaScript 생태계 표준인 패키지 관리자 작업 공간을 기반으로 구축되었습니다. 패키지를 포함할 작업공간에 디렉터리 경로를 추가합니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```yml title="pnpm-workspace.yaml"
+packages:
+  - apps/*
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```json title="package.json"
+{
+  "workspaces": ["apps/*"]
+}
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```json title="package.json"
+{
+  "workspaces": ["apps/*"]
+}
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```json title="package.json"
+{
+  "workspaces": ["apps/*"]
+}
+```
+
+</Tab>
+
+</PackageManagerTabs>
+
+### 3단계: 애플리케이션에 package.json 추가
+
+`project.json`과 같은 추가 구성 파일을 추가하는 대신 Turborepo는 표준 `package.json` 파일을 사용합니다.
+
+`package.json`을 `starter` 응용 프로그램에 추가합니다. `dev` 및 `build` 스크립트가 포함된 `./apps/starter/package.json`에서 `package.json`을 만듭니다.
+
+```json title="./apps/starter/package.json"
+{
+  "name": "starter",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build"
+  }
+}
+```
+
+### 4단계: Nx 플러그인 제거
+
+./apps/starter/next.config.js에서 Nx 플러그인을 제거하세요. 아래 예제 파일에는 구성이 없지만 기존 Next.js 애플리케이션에는 일부가 필요할 수 있습니다.
+
+```js title="./apps/starter/next.config.js"
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
+
+module.exports = nextConfig;
+```
+
+### 5단계: `packageManager` 필드 추가
+
+루트 package.json에는 `packageManager` 필드가 있어야 합니다. 이를 통해 저장소의 개발자가 올바른 패키지 관리자를 사용하고 Turborepo가 ​​잠금 파일을 기반으로 패키지 그래프를 최적화할 수 있습니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```json title="./package.json"
+{
+  "packageManager": "pnpm@9.0.0"
+}
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```json title="./package.json"
+{
+  "packageManager": "yarn@1.22.19"
+}
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```json title="./package.json"
+{
+  "packageManager": "npm@10.0.0"
+}
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```json title="./package.json"
+{
+  "packageManager": "bun@1.2.0"
+}
+```
+
+</Tab>
+
+</PackageManagerTabs>
+
+### 6단계: 패키지 관리자의 설치 명령 실행
+
+설치 명령을 실행하여 잠금 파일을 업데이트하세요.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm install
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+yarn install
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npm install
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bun install
+```
+
+</Tab>
+
+</PackageManagerTabs>
+
+이 작업을 완료하면 패키지가 패키지 관리자의 작업 공간에 추가되었음을 나타내는 잠금 파일 차이점이 표시됩니다.
+
+### 7단계: Turborepo 설치
+
+작업공간의 루트 `package.json`에 Turborepo를 추가합니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm add turbo --save-dev --workspace-root
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+ yarn add turbo --save-dev --ignore-workspace-root-check
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npm install turbo --save-dev
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bun install turbo --dev
+```
+
+</Tab>
+
+</PackageManagerTabs>
+
+Turborepo로 작업할 때 편의성을 높이기 위해 선택적으로 `turbo`을 전역으로 설치할 수도 있습니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm add turbo --global
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+yarn global add turbo
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npm install turbo --global
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bun install turbo --global
+```
+
+</Tab>
+
+</PackageManagerTabs>
+
+### 8단계: `turbo.json` 추가
+
+루트에 `turbo.json`을 생성하여 작업을 등록하고 해당 작업 종속성을 설명합니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
+```
+
+### 9단계: `turbo build` 실행
+
+Turborepo로 애플리케이션을 구축하세요. 전역 `turbo`을 사용하면 `turbo build`이 됩니다. 패키지 관리자를 통해 명령을 실행할 수도 있습니다:
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm exec turbo build
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+ yarn dlx turbo build
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npx turbo run build
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bunx turbo run build
+```
+
+</Tab>
+
+</PackageManagerTabs>
+
+### 10단계: 원격 캐싱 활성화(선택 사항)
+
+기본적으로 Turborepo는 다음을 실행할 때 무료 Vercel 원격 캐시에 연결됩니다.
+
+```bash title="Terminal"
+turbo login
+turbo link
+```
+
+자체 호스팅 원격 캐시를 구성할 수도 있습니다.
+
+## 고급 마이그레이션 고려 사항
+
+위의 마이그레이션 가이드는 좋은 출발점이지만 모노레포의 가능성과 기능이 넓기 때문에 모든 경우에 대한 일반화된 지침을 만드는 것은 어렵습니다. 아래에는 귀하가 생각할 수 있는 몇 가지 일반적인 다음 단계가 나열되어 있습니다.
+
+### 복잡한 모노 저장소를 점진적으로 마이그레이션
+
+우리는 증분 마이그레이션을 권장합니다. 즉, 저장소에 Nx와 Turborepo가 ​​동시에 있게 됩니다. Nx 작업 그래프가 어떻게 구성되는지 이해하는 데 시간을 투자하세요. 작업 그래프 분할에는 다음과 같은 전략이 포함될 수 있습니다:
+
+- **한 번에 하나의 작업 이전**: `nx run lint`을 `turbo run lint`로 변경
+- **한 번에 하나의 패키지/프로젝트 마이그레이션**: `nx run-many lint test --projects=web`을 `turbo run lint test --filter=web`으로 변경
+- **일부 작업을 이중 실행**: 안정성을 보장하기 위해 마이그레이션 초기 단계에서 편안함을 느끼고 확실성을 구축하는 동안 `turbo run lint` **및** `nx run lint`을 실행하도록 선택할 수 있습니다.
+
+### 사용되는 곳에 종속성 설치
+
+Turborepo는 캐시 적중률을 개선하고, 종속성 제거 기능을 지원하며, 개발자에게 어떤 종속성이 어떤 패키지에 대해 의미되는지 명확히 하기 위해 [사용되는 곳에 패키지 설치](/docs/crafting-your-repository/managing-dependencies#best-practices-for-dependency-installation)을 권장합니다. 이는 모든 종속성이 저장소의 루트에 설치되어 작업 공간의 모든 패키지에서 모든 종속성을 사용할 수 있게 만드는 Nx 전략과 다릅니다.
+
+ 역사적으로 Nx는 저장소의 루트에 모든 종속성을 설치하여 작업 공간의 모든 패키지에서 모든 종속성을 사용할 수 있도록 권장했습니다. 이 지침을 따랐다면 종속성이 필요한 패키지 및 애플리케이션에 대해 `package.json`으로 종속성을 이동하는 것이 좋습니다. 자세한 내용은 [종속성 관리에 대한 설명서를 참조하세요.](/docs/crafting-your-repository/managing-dependencies)을 참조하세요.
+
+### 공유 패키지 생성
+
+패키지 관리자의 작업 공간에 패키지를 추가하려면 위와 거의 동일한 단계를 따르세요.
+
+1. 패키지의 디렉터리가 작업 영역 정의(예: `./packages/*` )에 포함되어 있는지 확인하세요.
+2. 실행해야 하는 스크립트가 포함된 패키지에 `package.json`을 추가합니다.
+3. `turbo.json`에서 작업 종속성을 확인하여 종속성 그래프가 요구 사항을 충족하는지 확인하세요.
+
+### 다중 언어 단일 저장소
+
+Turborepo는 기본적으로 JavaScript 및 TypeScript를 지원하며 사용하려는 다른 언어에 대한 보조 지원도 제공합니다. [다국어 지원 문서를 방문하세요.](/docs/guides/multi-language) 자세히 알아보세요.
+
+## 동등한 구성
+
+`nx.json`에 있는 구성은 아래 표를 사용하여 `turbo.json`에 매핑될 수 있습니다.
+
+<Callout type="info">
+파일 캡처를 위한 glob의 대부분은 Nx와 
+ Turborepo 간에 동일합니다. 
+ 세부 사항 및 특별한 사례는 [우리의 파일 글로브 사양](/docs/reference/globs)을 참조하세요.
+</Callout>
+
+### 글로벌 구성
+
+| Nx | Turborepo |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `sharedGlobals` | [`globalDependencies`](/docs/reference/configuration#globaldependencies) |
+| `sharedGlobals.env` | [`globalEnv`](/docs/reference/configuration#globalenv) |
+| `sharedGlobals.namedInput` | [`globalDependencies`](/docs/reference/configuration#globaldependencies) |
+| `cacheDirectory` | [`cacheDir`](/docs/reference/configuration#cachedir) |
+
+### 작업 구성
+
+| Nx | Turborepo |
+| --------------- | -------------------------------------------------------------- |
+| `inputs` 파일 | [`tasks[task].inputs`](/docs/reference/configuration#inputs) |
+| `inputs.env` | [`tasks[task].env`](/docs/reference/configuration#env) |
+| `outputs` 파일 | [`tasks[task].outputs`](/docs/reference/configuration#outputs) |
+| `cache` | [`tasks[task].cache`](/docs/reference/configuration#cache) |
+
+### CLI에 상응하는 것
+
+| Nx | Turborepo |
+| ---------------- | ----------------------------------------------------------------------- |
+| `nx generate` | [`turbo generate`](/docs/reference/generate) |
+| `nx run` | [`turbo run`](/docs/reference/run) |
+| `nx run-many` | [`turbo run`](/docs/reference/run) |
+| `nx reset` | [`--force`](/docs/reference/run#--force) |
+| `--parallel` | [`--concurrency`](/docs/reference/run#--concurrency-number--percentage) |
+| `--nxBail` | [`--continue`](/docs/reference/run#--continueoption) |
+| `--projects` | [`--filter`](/docs/reference/run#--filter-string) |
+| `--graph` | [`--graph`](/docs/reference/run#--graph-file-name) |
+| `--output-style` | [`--log-order`](/docs/reference/run#--log-order-option) |
+| `--no-cloud` | [`--cache`](/docs/reference/run#--cache-options) |
+| `--verbose` | [`--verbosity`](/docs/reference/run#--verbosity) |

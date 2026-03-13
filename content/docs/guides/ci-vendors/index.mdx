@@ -1,0 +1,48 @@
+---
+title: 지속적인 통합
+description: Vercel, GitHub Actions 및 기타 지속적 통합 제공업체와 함께 Turborepo를 사용하기 위한 레시피입니다.
+product: turborepo
+type: overview
+summary: 파이프라인에서 원격 캐싱과 함께 Turborepo를 사용하기 위한 CI 제공자 레시피를 찾아보세요.
+related:
+- /docs/guides/ci-vendors/vercel
+- /docs/guides/ci-vendors/github-actions
+- /docs/guides/ci-vendors/circleci
+- /docs/guides/ci-vendors/gitlab-ci
+- /docs/guides/ci-vendors/travis-ci
+- /docs/guides/ci-vendors/buildkite
+---
+
+Turborepo는 [원격 캐싱](/docs/core-concepts/remote-caching)을 사용하여 빌드 속도뿐만 아니라 나머지 지속적 통합 파이프라인의 속도도 향상시킵니다. 다음은 CI 제공자와 함께 Turborepo를 사용하기 위한 몇 가지 플랫폼 레시피입니다.
+
+<Cards>
+
+<Card
+  title="Vercel(제로 구성)"
+  href="/docs/guides/ci-vendors/vercel"
+/>
+
+<Card title="GitHub 작업" href="/docs/guides/ci-vendors/github-actions" />
+
+<Card title="서클CI" href="/docs/guides/ci-vendors/circleci" />
+
+<Card title="GitLab CI" href="/docs/guides/ci-vendors/gitlab-ci" />
+
+<Card title="트래비스 CI" href="/docs/guides/ci-vendors/travis-ci" />
+
+<Card title="빌드카이트" href="/docs/guides/ci-vendors/buildkite" />
+
+</Cards>
+
+## 일반 설정
+
+CI에 대해 원격 캐싱을 활성화하려면:
+
+1. CI에서 Turborepo에 대한 환경 변수를 설정하여 원격 캐시에 액세스합니다.
+  | 변수 | 설명 |
+  | ----------- | ----------- |
+  | `TURBO_TOKEN` | 원격 캐시에 액세스하기 위한 Bearer 토큰 |
+  | `TURBO_TEAM` | 저장소와 연결된 계정 이름입니다. <a href="https://vercel.com/docs/monorepos/remote-caching#vercel-remote-cache" rel="noreferrer noopener" target="_blank">Vercel 원격 캐시</a>를 사용하는 경우 이는 [팀의 슬러그](https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fsettings&title=Get+team+slug). |
+2. 리포지토리를 복제합니다.
+3. 패키지 관리자를 통해 종속성을 설치합니다.
+4. `turbo`을 통해 작업을 실행하세요.

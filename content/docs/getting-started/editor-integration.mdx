@@ -1,0 +1,73 @@
+---
+title: 에디터 통합
+description: Turborepo를 최대한 활용하기
+product: turborepo
+type: guide
+summary: 에디터에서 JSON Schema 검증, ESLint 통합, Turborepo LSP를 설정하세요.
+prerequisites:
+  - /docs/getting-started/installation
+related:
+  - /docs/reference/configuration
+  - /docs/reference/eslint-config-turbo
+---
+
+`turbo`를 가장 잘 활용할 수 있도록 Turborepo는 에디터와 통합하기 위한 몇 가지 유틸리티를 제공합니다.
+
+## `turbo.json`용 JSON Schema
+
+Turborepo는 [JSON Schema](https://json-schema.org/)를 사용해 `turbo.json` 파일에서 자동 완성을 제공합니다. `turbo.json`에 `$schema` 키를 포함하면 에디터가 잘못된 설정에 대한 전체 문서와 린팅을 제공할 수 있습니다.
+
+### 웹에서 가져오기
+
+Turborepo 2.5.7부터 버전이 지정된 스키마를 서브도메인으로 제공하며, 형식은 `https://v<version>.turborepo.dev/schema.json`입니다. 버전에는 대시 구분자를 사용합니다.
+
+```json title="./turbo.json"
+{
+  "$schema": "https://v2-5-7.turborepo.dev/schema.json"
+}
+```
+
+이 방식의 장점은 에디터 내 검증을 보기 위해 패키지 매니저의 설치 명령을 실행할 필요가 없다는 점이며, 동시에 설치된 `turbo` 버전에 맞는 스키마를 사용하고 있음을 보장해 준다는 점입니다.
+
+<Callout type="info" title="버전이 없는 스키마">
+  Turborepo 2.5.7보다 오래된 버전을 사용하고 있거나 버전이 없는
+  스키마를 선호한다면 `https://turborepo.dev/schema.json`을 대신 사용할 수
+  있습니다.
+</Callout>
+
+### `node_modules`에서 가져오기
+
+Turborepo 2.4부터는 패키지 매니저의 설치 명령을 실행하면 `schema.json`을 `node_modules` 안에서 사용할 수 있습니다.
+
+```json title="turbo.json"
+{
+  "$schema": "./node_modules/turbo/schema.json"
+}
+```
+
+<Callout type="info" title="node_modules 위치">
+  `turbo`는 저장소 루트에 설치하는 것을 권장하므로, 스키마 경로도 저장소
+  루트의 `node_modules`를 가리키도록 해야 합니다. [패키지
+  구성](/docs/reference/package-configurations)에서는
+  `../../node_modules/turbo/schema.json` 같은 경로를 사용해야 할 수도
+  있습니다.
+</Callout>
+
+## 환경 변수 린팅
+
+환경 변수 처리는 Turborepo에서 애플리케이션을 빌드할 때 중요한 부분입니다.
+
+[`eslint-config-turbo` 패키지](/docs/reference/eslint-config-turbo)는 ESLint 설정을 확장해 모든 환경 변수를 빠짐없이 처리했는지 확인할 수 있도록 도와줍니다.
+
+## Turborepo LSP
+
+유효하지 않은 glob, 존재하지 않는 작업이나 패키지에 대한 참조, 추가 저장소 가시성 도구 등, JSON Schema가 제공하는 것보다 더 많은 자동 완성과 린팅을 에디터 안에서 활성화할 수 있습니다.
+
+설치하려면 [VSCode Extension Marketplace](https://marketplace.visualstudio.com/items?itemName=Vercel.turbo-vsc)를 방문하세요.
+
+<Callout type="info" title="Visual Studio Code를 사용하지 않나요?">
+  언어 서버는 [Language Server
+  Protocol](https://microsoft.github.io/language-server-protocol/)을 지원하는
+  모든 에디터에서 사용할 수 있습니다. 관심이 있다면 [이슈
+  트래커](https://github.com/vercel/turborepo/issues)에 요청을 남겨 주세요.
+</Callout>

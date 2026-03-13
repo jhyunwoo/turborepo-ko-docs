@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://turborepo-docs-ko.vercel.app/sitemap.xml

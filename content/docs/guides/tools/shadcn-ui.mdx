@@ -1,0 +1,92 @@
+---
+title: shadcn/ui
+description: Turborepo에서 shadcn/ui를 사용하는 방법을 알아보세요.
+product: turborepo
+type: integration
+summary: Turborepo 모노레포에서 shadcn/ui 구성 요소를 초기화하고 사용합니다.
+related:
+- /docs/guides/tools/tailwind
+- /docs/guides/tools/storybook
+---
+
+[shadcn/ui](https://ui.shadcn.com/docs/monorepo)는 Tailwind CSS로 제작되어 앱에 복사하여 붙여넣을 수 있는 아름답게 디자인된 구성 요소의 오픈 소스 세트입니다.
+
+새 모노레포에서 shadcn/ui를 시작하려면 다음을 실행하세요.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm dlx shadcn@canary init
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+npx shadcn@canary init
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npx shadcn@canary init
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bunx shadcn@canary init
+```
+
+</Tab>
+</PackageManagerTabs>
+
+메시지가 표시되면 단일 저장소 옵션을 선택합니다.
+
+구성요소를 추가하려면 다음을 실행하세요.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm dlx shadcn@canary add [COMPONENT]
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+npx shadcn@canary add [COMPONENT]
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npx shadcn@canary add [COMPONENT]
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bunx shadcn@canary add [COMPONENT]
+```
+
+</Tab>
+</PackageManagerTabs>
+
+## 추가 정보
+
+Turborepo에서 shadcn/ui를 사용하는 방법에 대해 자세히 알아보려면 [shadcn/ui 문서를 방문하세요](https://ui.shadcn.com/docs/monorepo).

@@ -1,0 +1,220 @@
+---
+title: 도커
+description: 모노레포에서 Docker를 사용하는 방법을 알아보세요.
+product: turborepo
+type: integration
+summary: turbo prune을 사용해 최소한의 종속성으로 모노레포에서 최적화된 Docker 이미지를 만드세요.
+related:
+  - /docs/guides/ci-vendors
+  - /docs/guides/tools/typescript
+---
+
+import { CreateTurboCallout } from "./create-turbo-callout.tsx";
+
+[Docker](https://www.docker.com/) 이미지를 빌드하는 것은 다양한 애플리케이션을 배포하는 일반적인 방법입니다. 하지만 모노레포에서 이를 수행하려면 몇 가지 어려움이 있습니다.
+
+<CreateTurboCallout />
+
+## 문제
+
+**모노레포에서는 관련 없는 변경으로 인해 앱을 배포할 때 Docker가 불필요한 작업을 수행하게 될 수 있습니다.**
+
+다음과 같은 모노레포가 있다고 가정해 봅시다.
+
+<Files>
+  <Folder name="apps" defaultOpen>
+    <Folder name="api" defaultOpen>
+      <File name="server.js" />
+      <File name="package.json" />
+    </Folder>
+    <Folder name="web" defaultOpen>
+      <File name="package.json" />
+    </Folder>
+  </Folder>
+  <File name="package.json" />
+  <File name="package-lock.json" />
+</Files>
+
+`apps/api`를 Docker로 배포하려고 하므로 Dockerfile을 만듭니다.
+
+```docker title="./apps/api/Dockerfile"
+FROM node:16
+
+WORKDIR /usr/src/app
+
+# 루트 package.json과 lockfile 복사
+COPY package.json ./
+COPY package-lock.json ./
+
+# api package.json 복사
+COPY apps/api/package.json ./apps/api/package.json
+
+RUN npm install
+
+# 앱 소스 복사
+COPY . .
+
+EXPOSE 8080
+
+CMD [ "node", "apps/api/server.js" ]
+```
+
+이렇게 하면 루트 `package.json`과 루트 lockfile이 Docker 이미지로 복사됩니다. 그런 다음 종속성을 설치하고, 앱 소스를 복사한 뒤, 앱을 시작합니다.
+
+앱 소스와 함께 `node_modules`가 복사되지 않도록 `.dockerignore` 파일도 만들어야 합니다.
+
+```txt title=".dockerignore"
+node_modules
+npm-debug.log
+```
+
+### lockfile이 너무 자주 바뀝니다
+
+Docker는 앱을 배포하는 방식에 꽤 영리합니다. Turborepo처럼 [가능한 한 적은 작업](https://bitjudo.com/blog/2014/03/13/building-efficient-dockerfiles-node-dot-js/)을 하려고 합니다.
+
+이 Dockerfile의 경우, 이미지에 들어 있는 파일이 이전 실행과 _다를 때만_ `npm install`을 실행합니다. 그렇지 않으면 이전에 있던 `node_modules` 디렉터리를 복원합니다.
+
+즉, `package.json`, `apps/api/package.json`, `package-lock.json`이 변경될 때마다 Docker 이미지는 `npm install`을 실행합니다.
+
+이건 훌륭해 보이지만 한 가지 문제가 있습니다. `package-lock.json`은 모노레포 전체에 대한 _전역_ 파일입니다. 즉, **`apps/web` 안에서 새 패키지를 설치하면 `apps/api`가 다시 배포됩니다**.
+
+대규모 모노레포에서는 모노레포 lockfile의 어떤 변경이든 수십, 수백 번의 배포로 연쇄적으로 이어질 수 있기 때문에 큰 시간 손실이 발생할 수 있습니다.
+
+## 해결책
+
+해결책은 Dockerfile에 들어가는 입력을 꼭 필요한 것만 남기도록 정리하는 것입니다. Turborepo는 이를 위한 간단한 해결책으로 `turbo prune`을 제공합니다.
+
+```bash title="Terminal"
+turbo prune api --docker
+```
+
+이 명령을 실행하면 `./out` 디렉터리 안에 **모노레포의 가지치기된 버전**이 생성됩니다. 여기에는 `api`가 의존하는 워크스페이스만 포함됩니다. 또한 관련된 `node_modules`만 다운로드되도록 **lockfile도 가지치기**합니다.
+
+### `--docker` 플래그
+
+기본적으로 `turbo prune`은 관련된 모든 파일을 `./out` 안에 넣습니다. 하지만 Docker와 함께 캐싱을 최적화하려면 파일을 두 단계로 나눠 복사하는 것이 이상적입니다.
+
+먼저, 패키지를 설치하는 데 필요한 파일만 복사하고 싶습니다. `--docker`를 사용하면 이것을 `./out/json` 안에서 찾을 수 있습니다.
+
+<Files>
+  <Folder name="out" defaultOpen>
+    <Folder name="json" defaultOpen>
+      <Folder name="apps" defaultOpen>
+        <Folder name="api" defaultOpen>
+          <File name="package.json" />
+        </Folder>
+      </Folder>
+      <File name="package.json" />
+    </Folder>
+    <Folder name="full" defaultOpen>
+      <Folder name="apps" defaultOpen>
+        <Folder name="api" defaultOpen>
+          <File name="server.js" />
+          <File name="package.json" />
+        </Folder>
+      </Folder>
+      <File name="package.json" />
+      <File name="turbo.json" />
+    </Folder>
+    <File name="package-lock.json" />
+  </Folder>
+</Files>
+
+그다음 `./out/full` 안의 파일을 복사해 소스 파일을 추가할 수 있습니다.
+
+이처럼 **종속성**과 **소스 파일**을 분리하면 **종속성이 바뀔 때만 `npm install`을 실행할 수 있게 되어** 훨씬 큰 속도 향상을 얻을 수 있습니다.
+
+<Callout type="info">
+  `--docker`를 사용하지 않으면 가지치기된 모든 파일이 `./out` 안에 배치됩니다.
+</Callout>
+
+### 예시
+
+자세한 [`with-docker` 예제](https://github.com/vercel/turborepo/tree/main/examples/with-docker)에서는 `prune`을 최대한 활용하는 방법을 깊이 있게 다룹니다. 편의를 위해 Dockerfile도 여기 다시 실어두었습니다.
+
+모노레포 루트에서 Dockerfile을 빌드합니다.
+
+```bash title="Terminal"
+docker build -f apps/web/Dockerfile .
+```
+
+<Callout type="info">
+  이 Dockerfile은 [Next.js](https://nextjs.org/) 앱이 `standalone` [output
+  mode](https://nextjs.org/docs/pages/api-reference/next-config-js/output)를 사용하도록
+  작성되었습니다.
+</Callout>
+
+```docker title="./apps/web/Dockerfile"
+FROM node:18-alpine AS base
+RUN apk update
+RUN apk add --no-cache libc6-compat
+# 작업 디렉터리 설정
+WORKDIR /app
+
+# ---
+FROM base AS prepare
+# <your-major-version>을 저장소에 설치된 메이저 버전으로 바꾸세요. 예를 들면:
+# RUN yarn global add turbo@^2
+RUN yarn global add turbo@^<your-major-version>
+COPY . .
+# 분리된 하위 워크스페이스의 lockfile과 package.json 추가
+# 대상 워크스페이스를 위한 가지치기된 lockfile로 부분 모노레포를 생성합니다.
+# "web"이 프로젝트의 package.json에 입력된 이름이라고 가정합니다: { name: "web" }
+RUN turbo prune web --docker
+
+# ---
+FROM base AS builder
+# 먼저 종속성을 설치합니다(변경 빈도가 더 낮기 때문입니다)
+COPY --from=prepare /app/out/json/ .
+RUN yarn install
+# 프로젝트 빌드
+COPY --from=prepare /app/out/full/ .
+
+# 원격 캐싱을 활성화하려면 주석을 해제하고 build args를 사용하세요
+# ARG TURBO_TEAM
+# ENV TURBO_TEAM=$TURBO_TEAM
+
+# ARG TURBO_TOKEN
+# ENV TURBO_TOKEN=$TURBO_TOKEN
+
+RUN yarn turbo build
+
+# ---
+FROM base AS runner
+# 보안상의 이유로 프로덕션을 root로 실행하지 마세요
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+USER nextjs
+
+# output trace를 자동으로 활용해 이미지 크기를 줄입니다
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+
+CMD node apps/web/server.js
+```
+
+## 원격 캐싱
+
+Docker 빌드 중 원격 캐시를 활용하려면, 빌드 컨테이너에 [Remote Cache](/docs/core-concepts/remote-caching)에 접근할 수 있는 자격 증명이 있는지 확인해야 합니다.
+
+Docker 이미지에서 시크릿을 다루는 방법은 여러 가지가 있습니다. 여기서는 최종 이미지에는 숨겨지는 build argument를 사용하는 multi-stage build라는 간단한 전략을 사용하겠습니다.
+
+위와 비슷한 Dockerfile을 사용한다고 가정하면, `turbo build` 직전에 build argument에서 일부 환경 변수를 가져오게 됩니다.
+
+```docker title="./apps/api/Dockerfile"
+ARG TURBO_TEAM
+ENV TURBO_TEAM=$TURBO_TEAM
+
+ARG TURBO_TOKEN
+ENV TURBO_TOKEN=$TURBO_TOKEN
+
+RUN yarn turbo run build
+```
+
+이제 `turbo`가 Remote Cache를 사용할 수 있습니다. 캐시되지 않은 Docker 빌드 이미지에서 Turborepo 캐시 적중을 확인하려면, 프로젝트 루트에서 다음과 같은 명령을 실행하세요.
+
+```bash title="Terminal"
+docker build -f apps/web/Dockerfile . --build-arg TURBO_TEAM="your-team-name" --build-arg TURBO_TOKEN="your-token" --no-cache
+```

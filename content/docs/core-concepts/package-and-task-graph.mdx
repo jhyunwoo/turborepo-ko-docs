@@ -1,0 +1,127 @@
+---
+title: 패키지 및 작업 그래프
+description: Turborepo는 구성 및 저장소 구조를 기반으로 작업 그래프를 구축합니다.
+product: turborepo
+type: conceptual
+summary: Turborepo가 ​​방향성 비순환 그래프를 사용하여 패키지 종속성과 작업 관계를 모델링하는 방법을 알아보세요.
+prerequisites:
+- /docs/core-concepts/internal-packages
+related:
+- /docs/crafting-your-repository/configuring-tasks
+- /docs/crafting-your-repository/running-tasks
+---
+
+## 패키지 그래프
+
+패키지 그래프는 패키지 관리자가 생성한 모노레포의 구조입니다. [내부 패키지](/docs/core-concepts/internal-packages)를 서로 설치하면 Turborepo는 해당 종속성 관계를 자동으로 식별하여 작업공간에 대한 기초적인 이해를 구축합니다.
+
+이는 **작업**이 서로 어떻게 관련되는지 정의하는 작업 그래프의 기초를 설정합니다.
+
+## 작업 그래프
+
+`turbo.json`에서는 작업이 서로 어떻게 연관되어 있는지 표현합니다. 이러한 관계를 다음과 같이 생각할 수 있습니다.
+작업 간 종속성은 있지만 작업 그래프라는 좀 더 공식적인 이름이 있습니다.
+
+<Callout type="info">
+  [를 사용하여 작업에 대한 작업 그래프의 시각화를 생성할 수 있습니다.
+ `--graph` 플래그](/docs/reference/run#--graph-file-type).
+</Callout>
+
+Turborepo는 [DAG(방향성 비순환 그래프)](https://en.wikipedia.org/wiki/Directed_acyclic_graph)라는 데이터 구조를 사용하여
+저장소와 해당 작업을 이해합니다. 그래프는 "노드"와
+"가장자리". 작업 그래프에서 노드는 작업이고 가장자리는
+작업 간의 종속성. _방향이 있는_ 그래프는 가장자리가
+각 노드를 연결하면 방향이 있으므로 작업 A가 작업 B를 가리킨다면 다음과 같이 말할 수 있습니다.
+작업 A는 작업 B에 따라 달라집니다. 가장자리의 방향은 작업 B에 따라 달라집니다.
+어느 것에 달려 있습니다.
+
+예를 들어 `./apps/web`에 애플리케이션이 포함된 모노레포가 있다고 가정해 보겠습니다.
+`@repo/ui` 및 `@repo/utils` 두 가지 패키지에 따라 다릅니다.
+
+<Files>
+  <Folder name="apps" defaultOpen>
+    <Folder name="web" />
+  </Folder>
+  <Folder name="packages" defaultOpen>
+    <Folder name="ui" />
+    <Folder name="utils" />
+  </Folder>
+</Files>
+
+`^build`에 의존하는 `build` 작업도 있습니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"]
+    }
+  }
+}
+```
+
+Turborepo는 다음과 같은 작업 그래프를 작성합니다.
+
+![작업 그래프 시각화. 다이어그램의 맨 위에는 "apps/web"이라는 노드가 하나 있고, 각각 다른 노드인 "packages/ui"와 "packages/utils"에 연결되는 두 줄이 있습니다.](/images/docs/simple-task-graph.png)
+
+### 대중교통 노드
+
+작업 그래프를 작성할 때 어려운 점은 중첩된 종속성을 처리하는 것입니다. 에 대한
+예를 들어, 모노레포에 `ui`에 의존하는 `docs` 앱이 있다고 가정해 보겠습니다.
+`core` 패키지에 따라 달라지는 패키지:
+
+<Files>
+  <Folder name="apps" defaultOpen>
+    <Folder name="docs" />
+  </Folder>
+  <Folder name="packages" defaultOpen>
+    <Folder name="ui" />
+    <Folder name="core" />
+  </Folder>
+</Files>
+
+`docs` 앱과 `core` 패키지에 각각 `build` 작업이 있다고 가정해 보겠습니다.
+`ui` 패키지는 그렇지 않습니다. 또한 다음을 구성하는 `turbo.json`도 있습니다.
+`build` 작업은 `"dependsOn": ["^build"]`과 동일한 방식으로 수행됩니다. 당신이 달릴 때
+`turbo run build`, 무슨 일이 일어나기를 기대하시나요?
+
+Turborepo는 다음 작업 그래프를 구축합니다.
+
+![전송 노드를 사용한 작업 그래프 시각화. 다이어그램의 맨 위에는 "packages/ui" 노드에 연결되는 줄이 있는 "apps/doc"라는 노드가 하나 있습니다. 이 노드에는 "빌드" 작업이 없습니다. "packages/ui" 노드에는 "빌드" 작업이 있는 "packages/core" 노드에 대한 또 다른 줄이 있습니다.](/images/docs/transitive-nodes.png)
+
+이 그래프는 일련의 단계로 생각할 수 있습니다.
+
+- `docs` 앱은 `ui`에만 의존합니다.
+- `ui` 패키지에는 빌드 스크립트가 **없습니다**.
+- `ui` 패키지의 _종속성_에는 `build` 스크립트가 있으므로 작업 그래프는 이를 포함한다는 것을 알고 있습니다.
+
+Turborepo는 이 시나리오에서 `ui` 패키지를 전송 노드라고 부릅니다.
+자체 `build` 스크립트가 없습니다. `build` 스크립트가 없기 때문에
+Turborepo는 이에 대해 아무것도 실행하지 않지만 여전히 그래프의 일부입니다.
+자체 종속성을 포함하는 목적.
+
+#### 진입점으로서의 대중교통 노드
+
+`docs/` 패키지가 `build` 작업을 구현하지 않으면 어떻게 되나요? 무엇을
+이런 일이 일어날 거라고 예상하시나요? `ui` 및 `core` 패키지가 여전히 필요합니까?
+빌드 작업을 실행하시겠습니까? 여기서 _무슨 일이든_ 일어나야 할까요?
+
+Turborepo의 정신 모델은 작업 그래프의 모든 노드가 동일하다는 것입니다. 즉,
+대중교통 노드는 그래프의 위치에 관계없이 그래프에 포함됩니다.
+이 모델은 예상치 못한 결과를 초래할 수 있습니다. 예를 들어 다음과 같이 구성했다고 가정해 보겠습니다.
+`build` 작업은 `^test`에 따라 달라집니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^test"]
+    }
+  }
+}
+```
+
+모노레포에 많은 앱과 패키지가 있다고 가정해 보겠습니다. 모든 패키지에는
+`test` 작업이 있지만 하나의 앱에만 `build` 작업이 있습니다. Turborepo의 정신 모델
+`turbo run build`을 실행하면 앱이 `build`을 구현하지 않더라도
+종속성인 모든 패키지의 `test` 작업이 그래프에 표시됩니다.

@@ -1,0 +1,312 @@
+---
+title: 시스템 환경 변수
+description: Turborepo에서 사용하는 시스템 변수에 대해 알아보세요.
+product: turborepo
+type: reference
+summary: 원격 캐시, 로깅, CI 설정을 포함해 Turborepo 동작을 제어하는 모든 환경 변수입니다.
+related:
+  - /docs/reference/configuration
+  - /docs/reference/options-overview
+---
+
+특정 환경 변수를 설정하면 Turborepo의 동작을 변경할 수 있습니다. 이는 서로 다른 환경과 머신에 맞는 구성을 만드는 데 유용할 수 있습니다.
+
+시스템 환경 변수는 항상 `turbo` 명령에 직접 제공한 플래그 값에 의해 덮어써집니다.
+
+<table id="system-environment-variables-table">
+  <thead>
+    <tr>
+      <th>변수</th>
+      <th>설명</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id="force_color">
+      <td>
+        <code>FORCE_COLOR</code>
+      </td>
+      <td>터미널 로그에 색상을 강제로 표시합니다.</td>
+    </tr>
+    <tr id="turbo_api">
+      <td>
+        <code>TURBO_API</code>
+      </td>
+      <td>
+        {" "}
+        <a href="/docs/core-concepts/remote-caching">원격 캐시</a>의 기본 URL을 설정합니다.
+      </td>
+    </tr>
+    <tr id="turbo_binary_path">
+      <td>
+        <code>TURBO_BINARY_PATH</code>
+      </td>
+      <td>
+        <code>turbo</code> 바이너리의 경로를 수동으로 설정합니다. 기본적으로{" "}
+        <code>turbo</code>는 바이너리를 자동으로 찾아내므로, 이 변수는 드문 경우에만 사용해야 합니다.
+      </td>
+    </tr>
+    <tr id="turbo_cache">
+      <td>
+        <code>TURBO_CACHE</code>
+      </td>
+      <td>
+        캐시 소스에 대한 읽기와 쓰기를 제어합니다.{" "}
+        <code>[--cache](/docs/reference/run#--cache-options)</code>와 동일한 구문을 사용합니다.
+      </td>
+    </tr>
+    <tr id="turbo_cache_dir">
+      <td>
+        <code>TURBO_CACHE_DIR</code>
+      </td>
+      <td>
+        <span>
+          <code>[--cache-dir](/docs/reference/run#--cache-dir-path)</code> 플래그를 사용할 때와 비슷하게 캐시 디렉터리를 설정합니다.
+        </span>
+      </td>
+    </tr>
+    <tr id="turbo_ci_vendor_env_key">
+      <td>
+        <code>TURBO_CI_VENDOR_ENV_KEY</code>
+      </td>
+      <td>
+        <span>원하는 환경 변수 접두사를 설정합니다.</span>
+        <strong> 제외할</strong> <span>환경 변수는 </span>[Framework
+        Inference](/docs/crafting-your-repository/using-environment-variables#framework-inference)에서 제외됩니다.{" "}
+        <div></div>
+        <strong>참고</strong>: 이 값은 사용자가 설정할 필요가 없으며, 지원되는 플랫폼이 자동으로 구성해야 합니다.
+      </td>
+    </tr>
+    <tr id="turbo_dangerously_disable_package_manager_check">
+      <td>
+        <code>TURBO_DANGEROUSLY_DISABLE_PACKAGE_MANAGER_CHECK</code>
+      </td>
+      <td>
+        <code>package.json</code>에 있는 <code>packageManager</code> 필드 검사를 비활성화합니다.
+        <div></div>
+        이 검사를 비활성화하면 [오류와 예기치 않은 캐싱 동작](/docs/reference/run#--dangerously-disable-package-manager-check)이 발생할 수 있습니다. 비활성화하려면 <code>true</code> 또는 <code>1</code>을 사용하세요.
+      </td>
+    </tr>
+    <tr id="turbo_download_local_enabled">
+      <td>
+        <code>TURBO_DOWNLOAD_LOCAL_ENABLED</code>
+      </td>
+      <td>
+        올바른 로컬 버전을 찾지 못했을 때 전역 <code>turbo</code>가 해당 버전을 설치하도록 활성화합니다.
+      </td>
+    </tr>
+    <tr id="turbo_force">
+      <td>
+        <code>TURBO_FORCE</code>
+      </td>
+      <td>
+        모든 작업을 강제로 완전히 다시 실행하고, 모든 캐싱을 사용하지 않으려면 <code>true</code>로 설정합니다.
+      </td>
+    </tr>
+    <tr id="turbo_global_warning_disabled">
+      <td>
+        <code>TURBO_GLOBAL_WARNING_DISABLED</code>
+      </td>
+      <td>
+        전역 <code>turbo</code>가 사용할 로컬 버전을 찾지 못했을 때 표시되는 경고를 비활성화합니다.
+      </td>
+    </tr>
+    <tr id="turbo_print_version_disabled">
+      <td>
+        <code>TURBO_PRINT_VERSION_DISABLED</code>
+      </td>
+      <td>
+        현재 실행 중인 <code>turbo</code>의 버전 출력을 비활성화합니다.
+      </td>
+    </tr>
+    <tr id="turbo_log_order">
+      <td>
+        <code>TURBO_LOG_ORDER</code>
+      </td>
+      <td>
+        <span>
+          <a href="/docs/reference/run#--log-order-option">로그 순서</a>를 설정합니다. 허용되는 값은
+        </span>{" "}
+        <code>grouped</code> <span>와</span> <code>default</code><span>입니다.</span>
+      </td>
+    </tr>
+    <tr id="turbo_login">
+      <td>
+        <code>TURBO_LOGIN</code>
+      </td>
+      <td>
+        [원격 캐시](/docs/core-concepts/remote-caching)에 로그인할 때 사용하는 URL을 설정합니다.
+        <div></div>
+        동적으로 토큰을 생성하는 엔드포인트를 구현한 자체 호스팅 원격 캐시에서만 필요합니다.
+      </td>
+    </tr>
+    <tr id="turbo_no_update_notifier">
+      <td>
+        <code>TURBO_NO_UPDATE_NOTIFIER</code>
+      </td>
+      <td>
+        새 버전의 <code>turbo</code>를 사용할 수 있을 때 나타나는 업데이트 알림을 제거합니다.
+        <div></div>
+        생태계 관례에 따라 <code>NO_UPDATE_NOTIFIER</code>도 사용할 수 있습니다.
+      </td>
+    </tr>
+    <tr id="turbo_platform_env">
+      <td>
+        <code>TURBO_PLATFORM_ENV</code>
+      </td>
+      <td>
+        지원되는 CI 환경(Vercel)에서 구성된 환경 변수 키의 CSV입니다.
+        <div></div>
+        <strong>참고</strong>: 이 변수는 무설정 환경 변수를 구현하려는 플랫폼을 위한 것입니다. 최종 사용자가 직접 사용하는 용도가 아닙니다.
+      </td>
+    </tr>
+    <tr id="turbo_platform_env_disabled">
+      <td>
+        <code>TURBO_PLATFORM_ENV_DISABLED</code>
+      </td>
+      <td>
+        <span>사용자의 </span>
+        <code>turbo.json</code>
+        <span>에 구성된 환경 변수를 지원되는 플랫폼에 설정된 값과 비교하는 검사를 비활성화합니다.</span>
+      </td>
+    </tr>
+    <tr id="turbo_preflight">
+      <td>
+        <code>TURBO_PREFLIGHT</code>
+      </td>
+      <td>
+        모든 캐시 아티팩트 및 분석 요청 전에 프리플라이트 요청을 보내도록 활성화합니다. 이어지는 업로드와 다운로드는 리디렉션을 따릅니다.{" "}
+        <a href="/docs/core-concepts/remote-caching">원격 캐싱</a>이 구성된 경우에만 적용됩니다.
+      </td>
+    </tr>
+    <tr id="turbo_remote_cache_read_only">
+      <td>
+        <code>TURBO_REMOTE_CACHE_READ_ONLY</code>
+      </td>
+      <td>
+        <a href="/docs/core-concepts/remote-caching">원격 캐시</a>에 쓰는 것을 방지하지만, 읽기는 계속 허용합니다.
+      </td>
+    </tr>
+    <tr id="turbo_remote_cache_signature_key">
+      <td>
+        <code>TURBO_REMOTE_CACHE_SIGNATURE_KEY</code>
+      </td>
+      <td>
+        비밀 키로 아티팩트에 서명합니다. [`futureFlags.longerSignatureKey`](/docs/reference/configuration#longersignaturekey)가 활성화된 경우 최소 32바이트 이상이어야 합니다. 자세한 내용은 [아티팩트 무결성 섹션](/docs/core-concepts/remote-caching#artifact-integrity-and-authenticity-verification)을 참고하세요.
+      </td>
+    </tr>
+    <tr id="turbo_remote_cache_timeout">
+      <td>
+        <code>TURBO_REMOTE_CACHE_TIMEOUT</code>
+      </td>
+      <td>
+        <a href="/docs/core-concepts/remote-caching">원격 캐시</a>에서 아티팩트를 가져올 때 <code>turbo</code>가 사용할 시간 제한을 초 단위로 설정합니다.
+      </td>
+    </tr>
+    <tr id="turbo_remote_cache_upload_timeout">
+      <td>
+        <code>TURBO_REMOTE_CACHE_UPLOAD_TIMEOUT</code>
+      </td>
+      <td>
+        <a href="/docs/core-concepts/remote-caching">원격 캐시</a>로 아티팩트를 업로드할 때 <code>turbo</code>가 사용할 시간 제한을 초 단위로 설정합니다.
+      </td>
+    </tr>
+    <tr id="turbo_remote_only">
+      <td>
+        <code>TURBO_REMOTE_ONLY</code>
+      </td>
+      <td>모든 작업에서 항상 로컬 파일 시스템 캐시를 무시합니다.</td>
+    </tr>
+    <tr id="turbo_run_summary">
+      <td>
+        <code>TURBO_RUN_SUMMARY</code>
+      </td>
+      <td>
+        작업을 실행할 때 <a href="/docs/reference/run#--summarize">실행 요약</a>을 생성합니다.
+      </td>
+    </tr>
+    <tr id="turbo_scm_base">
+      <td>
+        <code>TURBO_SCM_BASE</code>
+      </td>
+      <td>
+        <code>base...head</code>에서 무엇이 변경되었는지 계산할 때 <code>--affected</code>가 사용하는 기준(base)입니다.
+      </td>
+    </tr>
+    <tr id="turbo_scm_head">
+      <td>
+        <code>TURBO_SCM_HEAD</code>
+      </td>
+      <td>
+        <code>base...head</code>에서 무엇이 변경되었는지 계산할 때 <code>--affected</code>가 사용하는 헤드(head)입니다.
+      </td>
+    </tr>
+    <tr id="turbo_team">
+      <td>
+        <code>TURBO_TEAM</code>
+      </td>
+      <td>
+        저장소와 연결된 계정 이름입니다.{" "}
+        [Vercel Remote Cache](https://vercel.com/docs/monorepos/remote-caching#vercel-remote-cache)를 사용할 때는 [팀의 슬러그](https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fsettings&title=Get+team+slug)를 의미합니다.
+      </td>
+    </tr>
+    <tr id="turbo_teamid">
+      <td>
+        <code>TURBO_TEAMID</code>
+      </td>
+      <td>
+        저장소와 연결된 계정 식별자입니다. [Vercel Remote Cache](https://vercel.com/docs/monorepos/remote-caching#vercel-remote-cache)를 사용할 때는 팀 ID를 의미합니다.
+      </td>
+    </tr>
+    <tr id="turbo_telemetry_message_disabled">
+      <td>
+        <code>TURBO_TELEMETRY_MESSAGE_DISABLED</code>
+      </td>
+      <td>
+        <a href="/docs/telemetry">원격 측정</a>이 활성화되어 있음을 알리는 메시지를 비활성화합니다.
+      </td>
+    </tr>
+    <tr id="turbo_token">
+      <td>
+        <code>TURBO_TOKEN</code>
+      </td>
+      <td>
+        <a href="/docs/core-concepts/remote-caching">원격 캐시</a>에 접근하기 위한 인증 Bearer 토큰입니다.
+      </td>
+    </tr>
+    <tr id="turbo_ui">
+      <td>
+        <code>TURBO_UI</code>
+      </td>
+      <td>
+        true 또는 1을 전달하면 TUI를 활성화하고, false 또는 0을 전달하면 비활성화합니다.
+      </td>
+    </tr>
+    <tr id="turbo_concurrency">
+      <td>
+        <code>TURBO_CONCURRENCY</code>
+      </td>
+      <td>
+        run 또는 watch 모드에서 [동시성](/repo/docs/reference/run#--concurrency-number--percentage) 설정을 제어합니다.
+      </td>
+    </tr>
+    <tr id="turbo_sso_login_callback_port">
+      <td>
+        <code>TURBO_SSO_LOGIN_CALLBACK_PORT</code>
+      </td>
+      <td>
+        인증 중 SSO 로그인 콜백 서버가 사용하는 기본 포트(9789)를 재정의합니다.
+      </td>
+    </tr>
+
+  </tbody>
+</table>
+
+## 작업의 환경 변수
+
+Turborepo는 작업이 실행되는 동안 다음 환경 변수를 작업 내부에서 사용할 수 있게 합니다.
+
+| 변수           | 설명                                                                                                                                          |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TURBO_HASH`   | 현재 실행 중인 작업의 해시입니다.                                                                                                             |
+| `TURBO_IS_TUI` | [TUI](/docs/reference/configuration#ui)를 사용할 때 이 변수는 `true`로 설정됩니다.                                                          |
+| `TURBO_IS_MFE` | [microfrontends](/docs/guides/microfrontends)를 사용할 때 이 변수는 해당 애플리케이션의 `microfrontends.json`에 정의된 포트로 설정됩니다. |

@@ -1,0 +1,200 @@
+---
+title: 농담
+description: Turborepo에서 Jest를 사용하는 방법을 알아보세요.
+product: turborepo
+type: integration
+summary: Turborepo 캐싱 및 병렬화를 사용하여 monorepo 패키지 전체에 Jest 테스트 모음을 설정합니다.
+prerequisites:
+- /docs/crafting-your-repository/configuring-tasks
+related:
+- /docs/guides/tools/vitest
+- /docs/guides/tools/playwright
+---
+
+import { CreateTurboCallout } from "./create-turbo-callout.tsx";
+
+[Jest](https://jestjs.io/)는 광범위한 생태계를 갖춘 일반적인 테스트 러너입니다. Turborepo와 통합하면 엄청난 속도 향상이 가능합니다.
+
+<CreateTurboCallout />
+
+## 설정 중
+
+다음과 같은 모노레포가 있다고 가정해 보겠습니다.
+
+<Files>
+  <Folder name="앱" defaultOpen>
+    <Folder name="편물" defaultOpen>
+      <File name="패키지.json" />
+    </Folder>
+  </Folder>
+  <Folder name="패키지" defaultOpen>
+    <Folder name="UI" defaultOpen>
+      <File name="패키지.json" />
+    </Folder>
+  </Folder>
+</Files>
+
+테스트 스위트를 만들려는 패키지에 `jest`을 설치하십시오. 이 예에서는 `web` 및 `@repo/ui`에서 테스트를 수행합니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm add jest --save-dev --filter=@repo/ui --filter=web
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+yarn workspace web add jest --dev
+yarn workspace @repo/ui add jest --dev
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npm install jest --workspace=web --workspace=@repo/ui --save-dev
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+cd apps/web && bun install jest --dev
+cd packages/ui && bun install jest --dev
+```
+
+</Tab>
+</PackageManagerTabs>
+
+`apps/web` 및 `packages/ui` 모두 자체 테스트 모음이 있으므로 `package.json`에 `test` 스크립트를 추가하겠습니다.
+
+<Tabs items={["web", "@repo/ui"]}>
+<Tab value="web">
+```json title="./apps/web/package.json"
+{
+  "name": "web",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "latest"
+  }
+}
+```
+</Tab>
+<Tab value="@repo/ui">
+```json title="./packages/ui/package.json"
+{
+  "name": "@repo/ui",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "latest"
+  }
+}
+```
+</Tab>
+</Tabs>
+
+`turbo.json` 루트 내에서 `test` 작업을 만듭니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "test": {}
+  }
+}
+```
+
+이제 `turbo test`은 변경된 테스트 코드만 포함하여 각 패키지의 모든 테스트 스위트를 병렬화하고 캐시할 수 있습니다.
+
+## 감시 모드에서 테스트 실행
+
+테스트 스위트를 정상적으로 실행하면 완료되어 `stdout`으로 출력됩니다. 즉, Turborepo를 사용하여 [캐시](/docs/crafting-your-repository/caching)할 수 있습니다.
+
+그러나 감시 모드에서 테스트를 실행하면 프로세스가 종료되지 않습니다. 이렇게 하면 감시 작업이 [개발 작업](/docs/crafting-your-repository/developing-applications)에 더 가까워집니다.
+
+이러한 차이점으로 인해 **두 개의 별도 Turborepo 작업**을 지정하는 것이 좋습니다. 하나는 테스트를 실행하기 위한 것이고 다른 하나는 Jest의 감시 모드에서 실행하기 위한 것입니다. 각 작업공간의 각 `package.json` 파일 내부:
+
+<Tabs items={["web", "@repo/ui"]}>
+<Tab value="web">
+```json title="./apps/web/package.json"
+{
+  "name": "web",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch" // [!code highlight]
+  },
+  "devDependencies": {
+    "jest": "latest"
+  }
+}
+```
+</Tab>
+<Tab value="@repo/ui">
+```json title="./packages/ui/package.json"
+{
+  "name": "@repo/ui",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch" // [!code highlight]
+  },
+  "devDependencies": {
+    "jest": "latest"
+  }
+}
+```
+</Tab>
+</Tabs>
+
+루트 `turbo.json` 내부:
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "test": {},
+    "test:watch": {
+      "cache": false, // [!code highlight]
+      "persistent": true // [!code highlight]
+    }
+  }
+}
+```
+
+이제 `turbo test:watch`으로 [global `turbo`](/docs/getting-started/installation#global-installation)을 사용하거나 루트 `package.json`의 스크립트에서 이 작업을 실행할 수 있습니다.
+
+<Tabs items={["Global turbo", "./package.json"]}>
+<Tab value="Global turbo">
+
+```bash title="Terminal"
+turbo test
+```
+
+```bash title="Terminal"
+turbo test:watch
+```
+
+</Tab>
+
+<Tab value="./package.json">
+
+```json title="./package.json"
+{
+  "scripts": {
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch"
+  }
+}
+```
+
+</Tab>
+
+</Tabs>

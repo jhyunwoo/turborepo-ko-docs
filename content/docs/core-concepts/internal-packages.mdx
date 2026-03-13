@@ -1,0 +1,156 @@
+---
+title: 내부 패키지
+description: 모노레포에서 내부 패키지를 빌드하는 방법을 알아보세요.
+product: turborepo
+type: conceptual
+summary: 내부 패키지가 작동하는 방식과 모노레포에서 코드를 공유하기 위한 컴파일 전략을 이해하세요.
+prerequisites:
+- /docs/core-concepts/package-types
+related:
+- /docs/crafting-your-repository/creating-an-internal-package
+- /docs/core-concepts/package-and-task-graph
+- /docs/guides/publishing-libraries
+---
+
+내부 패키지는 소스 코드가 작업공간 내에 있는 라이브러리입니다. 모노레포 내에서 코드를 공유하기 위한 내부 패키지를 빠르게 만들고 나중에 필요한 경우 [npm 레지스트리에 게시](/docs/guides/publishing-libraries)하도록 선택할 수 있습니다.
+
+내부 패키지는 npm 레지스트리에서 제공되는 외부 패키지와 유사하게 `package.json`에 설치하여 저장소에서 사용됩니다. 그러나 설치할 버전을 표시하는 대신 패키지 관리자의 작업 영역 설치 구문을 사용하여 패키지를 참조할 수 있습니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+```json title="./apps/web/package.json"
+{
+  "dependencies": {
+    "@repo/ui": "workspace:*" // [!code highlight]
+  }
+}
+```
+</Tab>
+
+<Tab value="yarn">
+```json title="./apps/web/package.json"
+{
+  "dependencies": {
+    "@repo/ui": "*" // [!code highlight]
+  }
+}
+```
+</Tab>
+
+<Tab value="npm">
+```json title="./apps/web/package.json"
+{
+  "dependencies": {
+    "@repo/ui": "*" // [!code highlight]
+  }
+}
+```
+</Tab>
+
+<Tab value="bun">
+```json title="./apps/web/package.json"
+{
+  "dependencies": {
+    "@repo/ui": "workspace:*" // [!code highlight]
+  }
+}
+```
+</Tab>
+</PackageManagerTabs>
+
+[내부 패키지 생성 가이드](/docs/crafting-your-repository/creating-an-internal-package)에서는 [컴파일된 패키지 전략](#compiled-packages)을 사용하여 처음부터 내부 패키지를 빌드할 수 있습니다. 이 페이지에서는 외부 패키지를 생성하기 위한 [npm 레지스트리에 패키지 게시](#publishable-packages)를 포함하여 내부 패키지 생성을 위한 다른 전략과 그 장단점에 대해 설명합니다.
+
+그런 다음 외부 패키지에 익숙했던 것처럼 패키지를 코드로 가져올 수 있습니다.
+
+```tsx title="./apps/web/app/page.tsx"
+import { Button } from "@repo/ui"; // [!code highlight]
+
+export default function Page() {
+  return <Button>Submit</Button>;
+}
+```
+
+## 컴파일 전략
+
+라이브러리에 필요한 내용에 따라 다음 세 가지 컴파일 전략 중 하나를 선택할 수 있습니다.
+
+- [**Just-in-Time 패키지**](#just-in-time-packages): 애플리케이션 번들러가 패키지를 사용할 때 패키지를 컴파일할 수 있도록 허용하여 패키지에 대한 최소한의 구성을 만듭니다.
+- [**컴파일된 패키지**](#compiled-packages): 적당한 양의 구성으로 `tsc`과 같은 빌드 도구 또는 번들러를 사용하여 패키지를 컴파일합니다.
+- [**게시 가능한 패키지**](#publishable-packages): npm 레지스트리에 게시할 패키지를 컴파일하고 준비합니다. 이 접근 방식에는 가장 많은 구성이 필요합니다.
+
+### 적시 패키지
+
+Just-in-Time 패키지는 이를 사용하는 응용 프로그램에 의해 컴파일됩니다. 즉, TypeScript(또는 컴파일되지 않은 JavaScript) 파일을 직접 사용할 수 있으며 이 페이지의 다른 전략보다 훨씬 적은 구성이 필요합니다.
+
+이 전략은 다음과 같은 경우에 가장 유용합니다.
+
+- 귀하의 애플리케이션은 Turbopack, webpack 또는 Vite와 같은 최신 번들러를 사용하여 구축되었습니다.
+- 구성 및 설정 단계를 피하고 싶습니다.
+- 패키지 캐시에 도달할 수 없는 경우에도 애플리케이션 빌드 시간에 만족합니다.
+
+Just-in-Time 패키지의 `package.json`은 다음과 같습니다.
+
+```json title="./packages/ui/package.json"
+{
+  "name": "@repo/ui",
+  "exports": {
+    "./button": "./src/button.tsx", // [!code highlight]
+    "./card": "./src/card.tsx" // [!code highlight]
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0", // [!code highlight]
+    "check-types": "tsc --noEmit" // [!code highlight]
+  }
+}
+```
+
+`package.json`에서 주목해야 할 몇 가지 중요한 사항이 있습니다.
+
+- **TypeScript 직접 내보내기**: `exports` 필드는 패키지의 진입점을 표시하며 이 경우 **TypeScript 파일을 직접 참조**합니다. 이는 애플리케이션의 번들러가 빌드 프로세스에서 코드를 사용할 때 코드를 컴파일하기 때문에 가능합니다.
+- **`build` 스크립트 없음**: 이 패키지는 TypeScript를 내보내므로 패키지를 트랜스파일하기 위한 빌드 단계가 필요하지 않습니다. 즉, 작업공간에서 작동하도록 하기 위해 이 패키지의 빌드 도구를 구성할 필요가 없습니다.
+
+#### 제한사항 및 장단점
+
+- **소비자가 트랜스파일을 수행하는 경우에만 적용 가능**: 이 전략은 번들러를 사용하거나 기본적으로 TypeScript를 이해하는 도구에서 패키지를 사용하려는 경우에만 사용할 수 있습니다. 소비자의 번들러는 TypeScript 패키지를 JavaScript로 트랜스파일하는 일을 담당합니다. 빌드 또는 패키지의 다른 사용이 TypeScript를 사용할 수 없는 경우 [컴파일된 패키지](#compiled-packages) 전략으로 이동해야 합니다.
+- **TypeScript 없음 `paths`**: TypeScript는 소스 코드가 작성된 패키지에서 트랜스파일되고 있다고 가정하기 때문에 소비자가 트랜스파일하는 라이브러리는 `compilerOptions.paths` 구성을 사용할 수 없습니다. TypeScript 5.4 이상을 사용하는 경우 [Node.js 하위 경로 가져오기 사용](https://devblogs.microsoft.com/typescript/announcing-typescript-5-4/#auto-import-support-for-subpath-imports)을 권장합니다. 방법을 알아보려면 [TypeScript 페이지](/docs/guides/tools/typescript#use-nodejs-subpath-imports-instead-of-typescript-compiler-paths)를 방문하세요.
+- **Turborepo는 Just-in-Time 패키지에 대한 빌드를 캐시할 수 없습니다**: 패키지에 자체 `build` 단계가 없기 때문에 Turborepo에서 캐시할 수 없습니다. 구성을 최소한으로 유지하고 애플리케이션 빌드 시간에 문제가 없는 경우 이러한 절충안이 합리적일 수 있습니다.
+- **내부 종속성의 오류가 보고됩니다**: TypeScript를 직접 내보낼 때 내부 종속성의 코드에 TypeScript 오류가 있으면 종속 패키지의 유형 검사가 실패합니다. 어떤 상황에서는 이것이 혼란스럽거나 문제가 있을 수 있습니다.
+
+### 컴파일된 패키지
+
+컴파일된 패키지는 [`tsc`(TypeScript 컴파일러)](https://www.typescriptlang.org/docs/handbook/compiler-options.html#handbook-content)와 같은 빌드 도구를 사용하여 자체 컴파일을 처리하는 패키지입니다.
+
+```json title="./packages/ui/package.json"
+{
+  "name": "@repo/ui",
+  "exports": {
+    "./button": {
+      "types": "./src/button.tsx", // [!code highlight]
+      "default": "./dist/button.js" // [!code highlight]
+    },
+    "./card": {
+      "types": "./src/card.tsx", // [!code highlight]
+      "default": "./dist/card.js" // [!code highlight]
+    }
+  },
+  "scripts": {
+    "build": "tsc" // [!code highlight]
+  }
+}
+```
+
+라이브러리를 컴파일하면 패키지의 진입점으로 사용할 디렉터리(`dist`, `build` 등)에 컴파일된 JavaScript 출력이 생성됩니다. 빌드 출력은 [`outputs` 작업의 키](/docs/reference/configuration#outputs)에 추가되면 Turborepo에 의해 캐시되므로 빌드 시간이 더 빨라집니다.
+
+#### 제한사항 및 장단점
+
+- **TypeScript 컴파일러 사용**: 대부분의 컴파일된 패키지는 `tsc`을 사용해야 합니다. 번들러를 사용하는 애플리케이션에서 패키지를 사용할 가능성이 높으므로 애플리케이션의 번들러는 애플리케이션의 최종 번들에 배포할 라이브러리 패키지를 준비하고 폴리필링, 다운레벨링 및 기타 문제를 처리합니다. 번들러는 정적 자산을 패키지 출력에 번들링하는 것과 같이 이를 필요로 하는 특정 사용 사례가 있는 경우에만 사용해야 합니다.
+- **추가 구성**: 컴파일된 패키지에는 빌드 출력을 생성하기 위한 더 깊은 지식과 구성이 필요합니다. 관리하고 이해하기 어려울 수 있는 [TypeScript 컴파일러에 대한 많은 구성](https://www.typescriptlang.org/docs/handbook/compiler-options.html#compiler-options)과 [`package.json`의 `sideEffects` 키](https://webpack.js.org/guides/tree-shaking/#mark-the-file-as-side-effect-free)와 같이 번들러에 맞게 최적화하기 위한 추가 구성이 있습니다. [전용 TypeScript 가이드](/docs/guides/tools/typescript)에서 권장 사항 중 일부를 확인할 수 있습니다.
+
+### 게시 가능한 패키지
+
+npm 레지스트리에 패키지를 게시하려면 이 페이지의 패키징 전략 중 가장 엄격한 요구 사항이 필요합니다. 레지스트리에서 패키지를 다운로드하는 소비자가 패키지를 어떻게 사용할지 모르기 때문에 강력한 패키지에 필요한 수많은 구성으로 인해 어려울 수 있습니다.
+
+또한 npm 레지스트리에 패키지를 게시하는 프로세스에는 전문 지식과 도구가 필요합니다. 버전 관리, 변경 로그, 게시 프로세스를 관리하려면 [`changesets`](https://github.com/changesets/changesets)을 권장합니다.
+
+자세한 가이드를 보려면 [퍼블리싱 패키지 가이드](/docs/guides/publishing-libraries)를 방문하세요.

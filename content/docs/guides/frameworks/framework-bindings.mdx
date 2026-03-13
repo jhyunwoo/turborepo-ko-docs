@@ -1,0 +1,90 @@
+---
+title: 라이브러리의 프레임워크 바인딩
+description: 패키지에서 프레임워크 바인딩을 만드는 방법을 알아보세요.
+product: turborepo
+type: integration
+summary: 공유 라이브러리 패키지에서 프레임워크별 바인딩을 생성하려면 피어Dependency 및 내보내기 경로를 사용하세요.
+prerequisites:
+- /docs/crafting-your-repository/creating-an-internal-package
+related:
+- /docs/guides/frameworks/nextjs
+- /docs/guides/frameworks/sveltekit
+---
+
+[라이브러리 패키지](/docs/core-concepts/package-types#library-packages)의 프레임워크 바인딩은 라이브러리에서 직접 프레임워크의 API를 활용하여 라이브러리의 코드를 프레임워크와 더욱 깊이 통합합니다.
+
+이렇게 하려면 라이브러리의 `package.json`에 있는 `peerDependencies` 필드를 사용하세요. 이렇게 하면 프레임워크 API를 패키지에 직접 설치하지 않고도 라이브러리에서 사용할 수 있습니다.
+
+<Callout type="info">
+  이 페이지에서는 예제로 Next.js를 사용하지만 아래 개념은
+ 모든 프레임워크 또는 기타 종속성에 적용됩니다.
+</Callout>
+
+## 예
+
+바인딩을 만들려는 종속성에 대한 라이브러리에 `peerDependency`을 추가합니다.
+
+```json title="./packages/ui/package.json"
+{
+  "name": "@repo/ui",
+  "peerDependencies": {
+    "next": "*"
+  }
+}
+```
+
+<Callout type="info">
+  위의 예에서 `next`의 `peerDependency`은 모든 버전을 허용합니다. 당신
+ 필요에 따라 범위(예: `">=15"`)를 지정할 수 있습니다.
+ 또한 이전 패키지 관리자의 경우 다음과 같이 지시해야 할 수도 있습니다.
+ 패키지 관리자를 사용하여 구성과 함께 피어 종속성을 설치하거나
+ 해결 방법으로 `devDependencies`에 종속됩니다.
+</Callout>
+
+이렇게 하면 라이브러리에서 종속성을 사용할 수 있게 되어 아래와 같은 코드를 작성할 수 있습니다. 모노레포에서 이 구성 요소에 대한 기본 스타일을 설정하고 `props` 개체에서 재정의할 수 있는 `className` 소품에 유의하세요.
+
+```tsx title="./packages/ui/src/link.tsx"
+import Link from "next/link";
+import type { ComponentProps } from "react";
+
+type CustomLinkProps = ComponentProps<typeof Link>;
+
+export function CustomLink({ children, ...props }: CustomLinkProps) {
+  return (
+    <Link className="text-underline hover:text-green-400" {...props}>
+      {children}
+    </Link>
+  );
+}
+```
+
+패키지에 대해 확인될 `next` 버전은 라이브러리 소비자로부터 제공됩니다. 예를 들어 Next.js 15가 애플리케이션에 설치된 경우 `next`에 대한 TypeScript 유형 및 API도 Next.js 15가 됩니다.
+
+## 진입점을 사용하여 프레임워크 바인딩 분할
+
+내보내기 경로를 사용하여 패키지를 프레임워크별 진입점으로 분할하는 것은 여러 프레임워크 지원을 목표로 하는 라이브러리에 바인딩을 추가하는 가장 간단한 방법입니다. 진입점을 분할함으로써 번들러는 대상으로 삼으려는 프레임워크를 더 쉽게 이해할 수 있으며 이상한 번들링 오류가 발생할 가능성이 줄어듭니다.
+
+아래 예에서는 각각 다른 유형의 링크 구성 요소에 대한 두 개의 진입점이 있는 라이브러리를 보여줍니다. 이러한 추상화에는 래핑하는 요소 위에 사용자 고유의 스타일, API 및 기타 조정 사항이 포함될 수 있습니다.
+
+- `./link`: 디자인 시스템의 일부 기본 스타일이 포함된 `<a>` HTML 태그
+- `./next-js/link`: 조직의 기본 설정에 미리 설정된 소품이 포함된 [Next.js `Link` 구성 요소](https://nextjs.org/docs/app/building-your-application/routing/linking-and-navigating#link-component)의 사용자 정의 버전
+- `./svelte/link`: 사전 설정이 포함된 [Svelte용 `a` 태그](https://svelte.dev/docs/kit/link-options)의 사용자 정의 버전입니다.
+
+```json title="./packages/ui/package.json"
+{
+  "exports": {
+    "./link": "./dist/link.js",
+    "./next-js/link": "./dist/next-js/link.js"
+  },
+  "peerDependencies": {
+    "next": "*"
+  }
+}
+```
+
+<Callout type="info">
+  위의 예에서 `next`의 `peerDependency`은 모든 버전을 허용합니다. 당신
+ 필요에 따라 범위(예: `">=15"`)를 지정할 수 있습니다.
+</Callout>
+
+이 개념은 바인딩을 제공하려는 프레임워크 또는 기타 종속성에 제한 없이 적용될 수 있습니다.

@@ -1,0 +1,33 @@
+---
+title: 개발자 도구
+description: '`turbo devtools` 명령에 대한 API 참조'
+product: turborepo
+type: reference
+summary: 브라우저에서 모노레포의 패키지 그래프를 시각화하는 `turbo devtools` 명령에 대한 참조입니다.
+---
+
+브라우저에서 모노레포의 패키지 그래프를 시각화하세요.
+
+```bash title="Terminal"
+turbo devtools [options]
+```
+
+이 명령은 로컬 서버를 시작하고 브라우저를 열어 모노레포 패키지 그래프의 시각화를 보여줍니다.
+
+## 옵션
+
+### `--port`
+
+devtools 서버를 실행할 포트입니다. 기본값은 `9876`입니다.
+
+```bash title="Terminal"
+turbo devtools --port 3000
+```
+
+### `--no-open`
+
+서버가 시작될 때 브라우저를 자동으로 열지 마십시오.
+
+```bash title="Terminal"
+turbo devtools --no-open
+```

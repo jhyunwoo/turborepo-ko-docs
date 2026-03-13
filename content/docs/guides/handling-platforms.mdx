@@ -1,0 +1,86 @@
+---
+title: 취급 플랫폼
+description: Turborepo 작업에 대한 운영 체제, 아키텍처 및 기타 임의 조건에 대한 캐싱을 처리하는 방법을 알아보세요.
+product: turborepo
+type: guide
+summary: Turborepo 캐시 해시에서 OS, 아키텍처 및 Node.js 버전 차이를 고려하세요.
+prerequisites:
+- /docs/crafting-your-repository/caching
+related:
+- /docs/guides/ci-vendors
+---
+
+## Node.js 버전
+
+Node.js 버전을 설명하려면 [package.json의 엔진 키](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#engines)를 사용하세요. Turborepo는 이 필드의 변경 사항을 설명하고 그에 따라 캐시를 누락합니다.
+
+## 운영체제, 아키텍처, 기타 임의의 조건
+
+고급 사용 사례의 경우 운영 체제(OS), 아키텍처 또는 기타 외부 요인이 해시에 영향을 미치기를 원할 수 있습니다.
+
+### 1. 임의의 파일을 디스크에 쓰기
+
+먼저 관심 있는 해시 기여자를 설명하는 스크립트를 만듭니다. 예를 들어 다음은 플랫폼과 아키텍처를 식별하고 해당 세부 정보를 파일(`turbo-cache-key.json`)에 쓰는 Node.js 스크립트입니다.
+
+```js title="./scripts/create-turbo-cache-key.js"
+#!/usr/bin/env node
+
+const { writeFileSync } = require("fs");
+const { join } = require("path");
+
+const { platform, arch } = process;
+const file = "turbo-cache-key.json";
+const str = JSON.stringify({ platform, arch });
+console.log(`Generating cache key: ${str}`);
+writeFileSync(file, str);
+```
+
+### 2. .gitignore에 파일을 추가합니다.
+
+이 파일은 환경에 따라 다르므로 소스 제어에 커밋하고 싶지 않을 것입니다. `.gitignore`에 추가하세요.
+
+```diff title=".gitignore"
++ turbo-cache-key.json
+```
+
+### 3. 파일을 해시에 추가합니다.
+
+이제 작업 입력에 파일을 추가하여 `turbo`이 파일을 인식하는지 확인하세요. 이 작업은 두 가지 방법으로 수행할 수 있습니다.
+
+- **특정 작업의 경우**: 작업의 [`inputs` 배열](/docs/reference/configuration#inputs)에 파일을 포함합니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build-for-platforms": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "turbo-cache-key.json"]
+    }
+  }
+}
+```
+
+- **모든 작업**: [`globalDependencies`](/docs/reference/configuration#globaldependencies)에 파일을 추가합니다.
+
+```json title="./turbo.json"
+{
+  "globalDependencies": ["turbo-cache-key.json"],
+  "tasks": {
+    ...
+  }
+}
+```
+
+### 4. `turbo` 실행 전 파일 생성
+
+마지막으로 `turbo`을 실행하기 전에 스크립트를 실행했는지 확인해야 합니다. 예를 들어:
+
+```json title="./package.json"
+{
+  "scripts": {
+    "build-for-platforms": "node ./scripts/create-turbo-cache-key.js && turbo run build"
+  }
+}
+```
+
+`turbo run build`은 이제 `build` 작업에 대한 해시를 계산할 때 `turbo-cache-key.json`의 내용을 고려합니다.

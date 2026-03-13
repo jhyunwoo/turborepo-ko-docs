@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "index",
+    "getting-started",
+    "crafting-your-repository",
+    "reference",
+    "core-concepts",
+    "guides",
+    "community",
+    "support-policy",
+    "[용어집](https://vercel.com/docs/vercel-platform/glossary)",
+    "[변경 내역](https://github.com/vercel/turborepo/releases)"
+  ]
+}

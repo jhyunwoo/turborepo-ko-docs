@@ -1,0 +1,443 @@
+---
+title: Storybook
+description: Turborepo에서 Storybook을 사용하는 방법을 알아보세요.
+product: turborepo
+type: integration
+summary: 모노레포에서 UI 구성요소를 개발하고 문서화하기 위해 Storybook을 설정하세요.
+related:
+- /docs/guides/tools/tailwind
+- /docs/guides/tools/shadcn-ui
+- /docs/guides/tools/typescript
+---
+
+[Storybook](https://storybook.js.org/)은 격리된 환경에서 UI 구성요소를 구축하는 인기 있는 방법입니다. Storybook을 Turborepo에 넣으면 애플리케이션과 함께 디자인 시스템을 쉽게 개발할 수 있습니다.
+
+## 빠른 시작
+
+템플릿을 사용하고 싶다면 이 가이드에서 [이 Storybook/Turborepo 템플릿](https://vercel.com/templates/react/turborepo-design-system) 작성 방법을 안내합니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm dlx create-turbo@latest -e design-system
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+yarn dlx create-turbo@latest -e design-system
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npx create-turbo@latest -e design-system
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bunx create-turbo@latest -e design-system
+```
+
+</Tab>
+</PackageManagerTabs>
+
+## 가이드
+
+<Steps>
+<Step>
+
+### 모노레포 생성
+
+기존 프로젝트가 없으면 [창조 터보](/docs/getting-started/installation)을 사용하여 새 모노레포를 만듭니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm dlx create-turbo@latest
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+yarn dlx create-turbo@latest
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npx create-turbo@latest
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bunx create-turbo@latest
+```
+
+</Tab>
+</PackageManagerTabs>
+
+</Step>
+
+<Step>
+### 앱용 디렉터리 만들기
+
+Storybook 애플리케이션을 위한 디렉토리가 필요합니다:
+
+```bash title="Terminal"
+mkdir apps/storybook
+cd apps/storybook
+```
+
+</Step>
+
+<Step>
+### Storybook 애플리케이션 추가
+
+`apps/storybook` 디렉토리에서 새 Storybook 애플리케이션을 초기화합니다.
+
+<PackageManagerTabs>
+
+  <Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm create storybook@latest
+```
+
+  </Tab>
+  <Tab value="yarn">
+
+```bash title="Terminal"
+yarn create storybook@latest
+```
+
+  </Tab>
+
+  <Tab value="npm">
+
+```bash title="Terminal"
+npm create storybook@latest
+```
+
+  </Tab>
+
+  <Tab value="bun">
+
+```bash title="Terminal"
+bun create storybook@latest
+```
+
+  </Tab>
+</PackageManagerTabs>
+
+안내에 따라 애플리케이션을 생성하세요. 이 가이드의 나머지 부분에서는 React와 TypeScript를 가정하겠습니다.
+
+<Callout type="info">
+Storybook 온보딩을 진행한 후에는 [onboarding 애드온을 제거](https://github.com/storybookjs/addon-onboarding/blob/main/README.md)할 수 있습니다.
+</Callout>
+
+</Step>
+
+<Step>
+### Storybook에 UI 키트 추가
+
+이제 UI 패키지를 Storybook에 설치하세요.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm add @repo/ui --filter=storybook
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+yarn workspace storybook add @repo/ui
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npm install @repo/ui --workspace=storybook
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+cd apps/storybook && bun install @repo/ui
+```
+
+</Tab>
+</PackageManagerTabs>
+
+</Step>
+
+<Step>
+
+### Button 구성 요소에 대한 스토리 설정
+
+Storybook 스캐폴딩 도구로 생성된 `src/stories`에 있는 스토리와 구성 요소를 삭제합니다. 당신은 당신 자신을 만들 것입니다.
+
+예를 들어, 다음은 `@repo/ui/button`의 `Button` 구성 요소에 대한 스토리입니다.
+
+```tsx title="./apps/storybook/src/stories/Button.stories.tsx"
+import type { Meta, StoryObj } from "@storybook/react";
+import { Button } from "@repo/ui/button";
+
+const meta = {
+  title: "Example/Button",
+  component: Button,
+  tags: ["autodocs"],
+} satisfies Meta<typeof Button>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Primary: Story = {
+  args: {
+    appName: "Button",
+    children: "I am a primary button.",
+  },
+};
+```
+
+</Step>
+<Step>
+###  작업에 맞게 스크립트 정렬
+
+마지막으로 새로운 Storybook 애플리케이션을 Turborepo에 통합하세요:
+
+```json title="apps/storybook/package.json"
+{
+  "scripts": {
+    "dev": "storybook dev -p 6006", // [!code highlight]
+    "build": "storybook build" // [!code highlight]
+  }
+}
+```
+
+이 스크립트는 이제 `turbo.json`.
+
+에서 `turbo dev` 및 `turbo build` 작업과 함께 실행됩니다. `build`을 실행할 때 파일 출력이 캐시되도록 하려면 `turbo.json` 빌드 작업의 출력에 `storybook-static`을 추가하세요.
+
+```diff title="turbo.json"
+{
+  "tasks": {
+    "build": {
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**"
++       "storybook-static/**"
+      ]
+    }
+  }
+}
+```
+
+<Step>
+
+### `.gitignore`에 Storybook 빌드 출력 추가
+
+Storybook의 빌드 출력이 소스 제어에 커밋되지 않았는지 확인하세요
+
+```diff title=".gitignore"
++ storybook-static
+```
+
+</Step>
+
+<Step>
+### 구성 확인
+
+`turbo build`을 실행하여 나머지 애플리케이션과 함께 Storybook 애플리케이션을 구축합니다.
+
+`turbo build`을 다시 실행하여 빌드에 대한 캐시 적중을 확인할 수도 있습니다.
+
+</Step>
+
+</Step>
+</Steps>
+
+## 추가 팁
+
+### 같은 위치에 있는 이야기
+
+스토리를 Storybook 애플리케이션에 저장하는 대신 소스 코드에 같은 위치에 배치하려면 몇 가지 추가 구성이 필요합니다.
+
+<Steps>
+<Step>
+#### Storybook 소스 재구성
+
+`.storybook/main.ts`에서 `config`의 `stories` 경로를 캡처하려는 디렉터리로 변경합니다. 예를 들어 UI 패키지에 스토리를 작성하려면:
+
+```diff title="./apps/storybook/.storybook/main.ts"
+
+const config = {
+  stories: [
+-   "../src/**/*.mdx",
+-   "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
++   "../../../packages/ui/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+};
+```
+
+</Step>
+<Step>
+####  스토리 파일을 UI 패키지로 이동
+
+[위의 가이드](#set-up-a-story-for-your-button-component)를 따라 `./apps/storybook/src/stories/Button.stories.tsx` 파일을 `./packages/ui/src/Button.stories.tsx`로 이동합니다.
+
+구성 요소 가져오기가 이제 같은 위치에 있는 모듈을 참조하도록 업데이트합니다. 예를 들어, 스토리의 가져오기에서는 다음과 같습니다.
+
+```diff title="./packages/ui/src/Button.stories.tsx"
+- import { Button } from "@repo/ui/button";
++ import { Button } from "./button";
+```
+
+<Callout type="info">
+변경 사항 및 사용량에 따라 [절대
+ 수입](/docs/guides/tools/typescript#use-nodejs-subpath-imports-instead-of-typescript-compiler-paths)
+을 업데이트해야 할 수도 있습니다.
+</Callout>
+
+또한 스토리 작성에 필요한 Storybook 패키지를 설치해야 합니다. 예를 들어, 위에서 스토리를 이동하려면 `@storybook/react`을 `@repo/ui` 패키지에 설치해야 합니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+
+```bash title="Terminal"
+pnpm add @storybook/react --filter=@repo/ui --save-dev
+```
+
+</Tab>
+
+<Tab value="yarn">
+
+```bash title="Terminal"
+yarn workspace @repo/ui add @storybook/react --dev
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npm install @storybook/react --workspace=@repo/ui --save-dev
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+cd packages/ui && bun install @storybook/react --dev
+```
+
+</Tab>
+</PackageManagerTabs>
+
+</Step>
+
+<Step>
+#### 캐싱 구성
+
+스토리는 이제 UI 패키지에 있으므로 해당 스토리를 변경하면 UI 패키지에 의존하는 모든 빌드에서 캐시 누락이 발생할 수 있습니다. 그러나 스토리를 변경한다고 해서 프로덕션 애플리케이션이 캐시를 놓치는 것은 아닙니다.
+
+이를 방지하려면 루트 `turbo.json`의 `build` 작업에 대한 입력에서 스토리를 제외하세요. 또한 잠시 후에 필요할 `build:storybook` 작업을 생성해야 합니다:
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.stories.{tsx,jsx,mdx}"], // [!code highlight]
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "build:storybook": {} // [!code highlight]
+  }
+}
+```
+
+추가로, `storybook` 애플리케이션에서 [패키지 구성](/docs/reference/package-configurations)을 생성하여 스토리가 **Storybook 애플리케이션을 구축할 때 고려되도록**, 특히**:
+
+```json title="./apps/storybook/turbo.json"
+{
+  "extends": ["//"],
+  "tasks": {
+    "build:storybook": {
+      "dependsOn": ["^build:storybook"],
+      "outputs": ["storybook-static/**"]
+    }
+  }
+}
+```
+
+<Callout type="info">
+[컴파일된 Package
+ 패턴](/docs/core-concepts/internal-packages#compiled-packages)을 사용하는 경우 
+을(를) `dependsOn`에 `^build`을 추가해야 할 수도 있습니다.
+</Callout>
+
+</Step>
+<Step>
+
+#### 빌드 스크립트 이름 바꾸기
+
+마지막으로, Storybook을 빌드하기 위한 스크립트의 이름을 작업 이름으로 변경하여 방금 작성한 구성을 사용하는지 확인하십시오:
+
+```json title="apps/storybook/package.json"
+{
+  "scripts": {
+    "dev": "storybook dev -p 6006",
+    "build:storybook": "storybook build" // [!code highlight]
+  }
+}
+```
+
+한때 `"build"`이었던 스크립트는 이제 `"build:storybook"`으로 바뀌어 스토리가 캐싱용 해시에 포함되도록 합니다.
+
+</Step>
+
+<Step>
+#### 구성 확인
+
+설정이 올바른지 확인하려면:
+
+1. `turbo build:storybook build`을 실행하세요. 캐시 누락이 표시되어야 합니다.
+2. `turbo build:storybook build`을 다시 실행하세요. 모든 캐시 적중이 표시되어야 합니다.
+3. `@repo/ui` 패키지의 **스토리**에 코드를 변경하세요.
+4. `turbo build:storybook build`을 다시 실행하세요. Storybook 애플리케이션에 대한 캐시 누락이 **만** 표시되어야 합니다. 다른 모든 항목은 캐시에 적중되어야 합니다.
+
+</Step>
+
+</Steps>
+
+### CSS 추가
+
+UI 패키지가 자체 CSS를 내보내는 경우 이를 애플리케이션에 추가하는 방법과 유사하게 Storybook 앱의 렌더링에 추가해야 합니다. [Storybook 문서](https://storybook.js.org/docs/configure/styling-and-css#css)에서는 `.storybook/preview.ts` 파일에 추가할 것을 권장합니다.

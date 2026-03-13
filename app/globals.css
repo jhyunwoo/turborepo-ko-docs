@@ -1,0 +1,184 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/shadcn.css";
+@import "fumadocs-ui/css/preset.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+}
+
+:root {
+  --radius: 1rem;
+  --background: oklch(0.99 0.012 95);
+  --foreground: oklch(0.2 0.035 250);
+  --card: oklch(1 0 0 / 0.82);
+  --card-foreground: oklch(0.2 0.035 250);
+  --popover: oklch(1 0 0 / 0.95);
+  --popover-foreground: oklch(0.2 0.035 250);
+  --primary: oklch(0.58 0.2 250);
+  --primary-foreground: oklch(0.99 0.005 270);
+  --secondary: oklch(0.95 0.018 240);
+  --secondary-foreground: oklch(0.29 0.05 255);
+  --muted: oklch(0.96 0.01 240);
+  --muted-foreground: oklch(0.49 0.04 250);
+  --accent: oklch(0.94 0.028 210);
+  --accent-foreground: oklch(0.24 0.05 255);
+  --border: oklch(0.9 0.015 250 / 0.8);
+  --input: oklch(0.9 0.015 250 / 0.85);
+  --ring: oklch(0.64 0.18 248 / 0.6);
+  --sidebar: oklch(1 0 0 / 0.72);
+  --sidebar-foreground: oklch(0.22 0.035 250);
+  --sidebar-accent: oklch(0.95 0.03 250 / 0.8);
+  --sidebar-accent-foreground: oklch(0.24 0.05 255);
+  --sidebar-border: oklch(0.88 0.014 248 / 0.7);
+  --font-sans: "SUIT Variable", "Pretendard Variable", "Pretendard",
+    "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui,
+    sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, SFMono-Regular,
+    Menlo, Consolas, monospace;
+  --fd-layout-width: 100%;
+  --fd-page-width: 100%;
+}
+
+.dark {
+  --background: oklch(0.17 0.03 252);
+  --foreground: oklch(0.96 0.01 260);
+  --card: oklch(0.21 0.035 252 / 0.82);
+  --card-foreground: oklch(0.96 0.01 260);
+  --popover: oklch(0.2 0.035 252 / 0.96);
+  --popover-foreground: oklch(0.96 0.01 260);
+  --primary: oklch(0.72 0.17 242);
+  --primary-foreground: oklch(0.18 0.02 252);
+  --secondary: oklch(0.28 0.03 252);
+  --secondary-foreground: oklch(0.96 0.01 260);
+  --muted: oklch(0.26 0.03 252);
+  --muted-foreground: oklch(0.72 0.03 252);
+  --accent: oklch(0.29 0.05 205);
+  --accent-foreground: oklch(0.95 0.01 260);
+  --border: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.12);
+  --ring: oklch(0.66 0.16 242 / 0.55);
+  --sidebar: oklch(0.2 0.03 252 / 0.8);
+  --sidebar-foreground: oklch(0.96 0.01 260);
+  --sidebar-accent: oklch(0.29 0.04 252 / 0.9);
+  --sidebar-accent-foreground: oklch(0.98 0.01 260);
+  --sidebar-border: oklch(1 0 0 / 0.08);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at top, color-mix(in oklab, var(--primary) 16%, transparent) 0, transparent 42%),
+      radial-gradient(circle at 20% 20%, color-mix(in oklab, var(--accent) 18%, transparent) 0, transparent 24%),
+      linear-gradient(180deg, color-mix(in oklab, var(--background) 86%, white 14%) 0%, var(--background) 100%);
+    font-family: var(--font-sans);
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 24%, transparent);
+  }
+
+  a {
+    text-underline-offset: 0.22em;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply border border-border/70 bg-card/80 shadow-[0_10px_40px_-18px_rgba(31,41,55,0.45)] backdrop-blur-xl;
+  }
+
+  .mesh-border {
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 55%, transparent),
+      0 18px 60px -26px rgba(15, 23, 42, 0.38);
+  }
+}
+
+.site-shell {
+  position: relative;
+}
+
+.site-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 85% 15%, color-mix(in oklab, var(--primary) 10%, transparent) 0, transparent 25%),
+    radial-gradient(circle at 15% 30%, color-mix(in oklab, var(--accent) 10%, transparent) 0, transparent 28%);
+}
+
+.fd-card,
+.fd-callout,
+.fd-tabs-list,
+.fd-codeblock,
+pre {
+  backdrop-filter: blur(14px);
+}
+
+#nd-docs-layout {
+  overflow-x: visible;
+}
+
+#nd-docs-layout > div[data-state] {
+  top: 4.5rem;
+}
+
+#nd-sidebar-mobile {
+  margin-top: 4.5rem;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  letter-spacing: -0.03em;
+}
+
+.prose table th,
+.prose table td {
+  vertical-align: top;
+}

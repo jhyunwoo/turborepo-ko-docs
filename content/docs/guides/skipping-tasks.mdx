@@ -1,0 +1,78 @@
+---
+title: 작업 건너뛰기
+description: 동일한 작업을 두 번 수행하지 마십시오.
+product: turborepo
+type: guide
+summary: 작업 영역에 관련 코드 변경 사항이 없을 때 CI 작업을 완전히 건너뛰려면 터보 무시를 사용하세요.
+prerequisites:
+- /docs/crafting-your-repository/caching
+related:
+- /docs/guides/ci-vendors
+- /docs/guides/ci-vendors/vercel
+---
+
+[캐싱](/docs/crafting-your-repository/caching)을 사용하면 작업 속도가 크게 향상되지만 `npx turbo-ignore`을 사용하면 훨씬 더 빠르게 작업할 수 있습니다. 작업공간이 코드 변경의 영향을 받지 않는 경우 작업 실행을 완전히 건너뛸 수 있습니다.
+
+`web` 애플리케이션(또는 해당 패키지 종속성)에 변경 사항이 없을 때 `web` 작업 영역에 대한 단위 테스트를 건너뛰고 싶다고 가정해 보겠습니다. 이미 [원격 캐싱](https://turborepo.dev/docs/core-concepts/remote-caching)을 사용하고 있다면 캐시 적중이 발생할 수 있습니다. 그러나 CI 컨테이너 프로비저닝, `npm` 종속성 설치 및 기타 시간이 걸릴 수 있는 작업에는 여전히 시간이 소요됩니다.
+
+이상적으로는 해당 작업이 처음부터 수행되어야 하는지 빠르게 확인하는 것이 좋습니다.
+
+---
+
+리포지토리를 체크아웃한 후 다른 작업 **전에** 상위 커밋 이후 `web` 테스트가 변경되었는지 확인하는 데 몇 초가 걸릴 수 있습니다.
+
+```bash title="Terminal"
+npx turbo-ignore web --task=test
+```
+
+이 명령은 다음을 수행합니다.
+
+1. `web` 작업 공간을 필터링합니다.
+2. 상위 커밋과 비교하여 `test` 작업에 대한 `dry` 출력을 생성합니다.
+3. 출력을 구문 분석하여 어떤 패키지가 변경되었는지 확인합니다.
+4. 변경 사항이 감지되면 `1` 코드로 종료합니다. 그렇지 않으면 `0`으로 종료됩니다.
+
+이 작업을 위해 `>>> FULL TURBO` 캐시를 사용할 수 있었을 수도 있지만 CI 실행에 필요한 다른 모든 설정 작업으로 인해 시간이 절약되었습니다.
+
+## `turbo-ignore` 사용
+
+영향을 받지 않은 작업을 건너뛰려면 먼저 Git 기록을 머신에서 사용할 수 있는지 확인하세요. 그런 다음 `npx turbo-ignore`을 실행합니다.
+
+`turbo-ignore`은 `--filter` 및 `--dry=json` 플래그의 조합을 사용하여 상위 커밋에서 현재 커밋까지의 변경 사항을 찾아 영향을 받는 패키지를 식별합니다. 기본적으로 `turbo-ignore`은 **현재 작업 디렉터리의 빌드 작업**에 대한 차이점을 찾지만 [플래그를 사용하여 이 동작을 사용자 정의](#customizing-behavior)할 수 있습니다.
+
+다음은 빌드하고 실행할 명령의 예입니다.
+
+```bash title="Terminal"
+npx turbo run build --filter=@example/web...3c8387ffd98b751305fe3f0284befdd00cbd4610 --dry=json
+```
+
+연습 실행은 빌드 작업을 _실행_하지 않는다는 점에 유의하세요. 대신, 코드 변경 사항이 단 몇 초 만에 빌드(또는 다른 작업)에 영향을 미치는지 확인하기 위해 패키지를 확인합니다.
+
+`turbo-ignore`이 작업을 건너뛸 수 있음을 발견하면 `0` 코드를 사용하여 프로세스를 종료합니다. 변경 사항이 발견되면 `1`으로 프로세스가 종료됩니다.
+
+<Callout type="info">
+  Vercel에서는 이전에 배포된 SHA가 상위 대신 사용됩니다.
+ 커밋하다.
+</Callout>
+
+## 동작 사용자 정의
+
+작업 공간을 지정하려면 다음과 같이 명령에 추가하면 됩니다.
+
+```bash title="Terminal"
+npx turbo-ignore web
+```
+
+여기서 `web`은 기본 `build` 작업을 실행하는 작업 영역의 이름입니다.
+
+작업을 변경하려면 `--task` 플래그를 사용하여 `turbo-ignore`이 호출할 명령에 대한 작업을 지정합니다.
+
+## Vercel에서 `turbo-ignore` 사용
+
+Vercel에서 `npx turbo-ignore`를 사용하려면 [무시된 빌드 단계](https://vercel.com/docs/concepts/projects/overview#ignored-build-step) 기능을 사용하면 됩니다. Vercel은 `turbo-ignore`을 성공적으로 실행하기 위해 올바른 인수를 자동으로 추론합니다.
+
+## 동작 사용자 정의
+
+Vercel을 사용하지 않는 경우 `--fallback` 플래그를 사용하여 비교할 커밋을 지정하세요.
+
+Vercel에서는 `--fallback` 플래그를 지정하여 Vercel에 기본 비교를 사용할 수 없는 경우 비교할 git ref를 제공할 수 있습니다. 기본적으로 Vercel은 가장 최근에 배포된 SHA와 비교하므로 브랜치에 대한 첫 번째 커밋에 대한 배포를 피하는 것과 같은 사용 사례에 유용합니다.

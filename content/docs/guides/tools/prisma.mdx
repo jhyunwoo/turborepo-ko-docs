@@ -1,0 +1,30 @@
+---
+title: 프리즈마
+description: Turborepo에서 Prisma를 사용하는 방법을 알아보세요.
+product: turborepo
+type: integration
+summary: Turborepo 모노레포에 Prisma를 공유 데이터베이스 패키지로 통합하세요.
+related:
+- /docs/guides/tools/docker
+- /docs/guides/tools/typescript
+---
+
+import { CreateTurboCallout } from "./create-turbo-callout.tsx";
+
+[Prisma](https://www.prisma.io/)는 직관적인 데이터 모델, 자동화된 마이그레이션, 유형 안전성 및 자동 완성 덕분에 데이터베이스 작업 시 새로운 수준의 개발자 경험을 제공합니다.
+
+[공식 가이드](https://www.prisma.io/docs/guides/turborepo)에서는 다음을 포함하여 Prisma를 Turborepo에 통합하는 방법을 설명합니다.
+
+- Prisma 클라이언트 초기화
+- 클라이언트를 [내부 패키지](/docs/core-concepts/internal-packages)로 패키징합니다.
+- 마이그레이션 수행
+- 로컬에서 애플리케이션 작업
+- 배포
+
+## 예
+
+커뮤니티에서 지원하는 Prisma 예제를 시작하려면 다음을 실행하세요.
+
+```bash title="Terminal"
+npx create-turbo@latest -e with-prisma
+```

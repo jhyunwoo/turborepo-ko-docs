@@ -1,0 +1,276 @@
+---
+title: 캐싱
+description: Turborepo의 캐싱에 대해 알아보세요.
+product: turborepo
+type: guide
+summary: 입력 지문을 사용하고 캐시에서 출력을 복원해 반복 작업을 피하도록 작업 캐싱을 구성합니다.
+prerequisites:
+  - /docs/crafting-your-repository/running-tasks
+related:
+  - /docs/core-concepts/remote-caching
+  - /docs/crafting-your-repository/using-environment-variables
+  - /docs/reference/configuration
+---
+
+import { ExperimentalBadge } from "@/components/geistdocs/experimental-badge";
+
+Turborepo는 캐싱을 사용해 빌드 속도를 높이며, **같은 작업을 두 번 하지 않도록** 도와줍니다. 작업이 캐시 가능하다면 Turborepo는 해당 작업이 처음 실행됐을 때 만들어진 지문을 사용해 캐시에서 결과를 복원합니다.
+
+![3개 패키지에서 12개 작업이 실행되며 ">>> FULL TURBO" 캐시 적중이 발생한 모습입니다. 이 작업들을 캐시에서 복원하는 데 걸리는 총 시간은 80밀리초입니다.](/images/docs/why-turborepo-solution.png)
+
+Turborepo의 캐싱은 로컬에서 작업할 때도 큰 시간 절약 효과를 제공하며, [원격 캐싱](/docs/core-concepts/remote-caching)을 활성화해 팀 전체와 CI가 캐시를 공유하면 더욱 강력해집니다.
+
+이 페이지에서 배우게 될 내용은 다음과 같습니다.
+
+- [첫 번째 Turborepo 캐시를 적중시키는 방법](#hit-your-first-turborepo-cache)
+- [원격 캐싱을 활성화하는 방법](/docs/core-concepts/remote-caching)
+- [Turborepo가 해시의 입력과 출력으로 사용하는 요소](#task-inputs)
+- [캐싱 문제를 해결하는 방법](#troubleshooting)
+
+<Callout type="info">
+  Turborepo는 작업이 **결정적**이라고 가정합니다. Turborepo가 알고 있는
+  동일한 입력 집합으로 작업이 서로 다른 출력을 만들 수 있다면, 캐싱은
+  예상대로 동작하지 않을 수 있습니다.
+</Callout>
+
+## 첫 번째 Turborepo 캐시 적중시키기
+
+세 단계로 Turborepo의 캐싱 동작을 직접 시험해 볼 수 있습니다.
+
+<Steps>
+<Step>
+### 새 Turborepo 프로젝트 만들기
+
+`npx create-turbo@latest`를 사용하고 안내에 따라 새 Turborepo를 만드세요.
+
+```bash title="Terminal"
+npx create-turbo@latest
+```
+
+</Step>
+<Step>
+### 처음으로 빌드 실행하기
+
+[`turbo`를 전역 설치해 두었다면](/docs/getting-started/installation#global-installation), 저장소에서 `turbo build`를 실행하세요.
+
+또는 패키지 매니저를 사용해 `package.json`의 `build` 스크립트를 실행해도 됩니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+```bash title="Terminal"
+pnpm run build
+```
+
+</Tab>
+
+<Tab value="yarn">
+```bash title="Terminal"
+yarn build
+```
+
+</Tab>
+
+<Tab value="npm">
+
+```bash title="Terminal"
+npm run build
+```
+
+</Tab>
+
+<Tab value="bun">
+
+```bash title="Terminal"
+bun run build
+```
+
+</Tab>
+</PackageManagerTabs>
+
+이 저장소에서 이 [입력 집합](#task-inputs)으로 `turbo`를 실행한 적이 아직 없으므로 캐시 누락이 발생합니다. 입력은 로컬 파일 시스템 캐시 또는 [원격 캐시](/docs/core-concepts/remote-caching)에서 확인할 수 있도록 해시로 변환됩니다.
+
+</Step>
+
+<Step>
+
+### 캐시 적중시키기
+
+`turbo build`를 다시 실행하세요. 다음과 같은 메시지가 보일 것입니다.
+
+![`turbo`를 통해 실행된 두 작업이 116밀리초 만에 성공적으로 완료된 모습을 보여 주는 터미널 창입니다.](/images/docs/full-turbo.png)
+
+</Step>
+
+</Steps>
+
+입력의 지문이 이미 캐시에 있으므로 애플리케이션을 처음부터 다시 빌드할 이유가 없습니다. 캐시에서 이전 빌드 결과를 복원해 리소스와 시간을 절약할 수 있습니다.
+
+## 원격 캐싱
+
+Turborepo는 작업 결과를 컴퓨터의 `.turbo/cache` 디렉터리에 저장합니다. 하지만 이 캐시를 팀원 및 CI와 공유하면 조직 전체의 속도를 더욱 높일 수 있습니다.
+
+원격 캐싱과 그 이점에 대해 자세히 알아보려면 [원격 캐싱 페이지](/docs/core-concepts/remote-caching)를 참고하세요.
+
+### 원격 캐시 활성화
+
+먼저 원격 캐시 제공자에 로그인하세요.
+
+```bash title="Terminal"
+npx turbo login
+```
+
+그다음 현재 컴퓨터의 저장소를 원격 캐시에 연결하세요.
+
+```bash title="Terminal"
+npx turbo link
+```
+
+이제 작업을 실행하면 Turborepo가 자동으로 해당 작업의 출력을 원격 캐시로 전송합니다. 같은 원격 캐시에 인증된 다른 컴퓨터에서 동일한 작업을 실행하면, 그 컴퓨터에서는 처음 실행할 때부터 캐시 적중이 발생합니다.
+
+CI 머신을 원격 캐시에 연결하는 방법은 [Constructing CI 가이드](/docs/crafting-your-repository/constructing-ci#enabling-remote-caching)를 참고하세요.
+
+<Callout type="info">
+  기본적으로 Turborepo는 별도 설정 없이 [Vercel Remote
+  Cache](https://vercel.com/docs/monorepos/remote-caching)를 사용합니다.
+  다른 Remote Cache를 사용하고 싶다면 [Remote Caching API
+  documentation](/docs/core-concepts/remote-caching#self-hosting)을 참고하세요.
+</Callout>
+
+## Git Worktree 캐시 공유
+
+[Git worktree](https://git-scm.com/docs/git-worktree)로 작업할 때 Turborepo는 메인 worktree와 연결된 worktree들 사이에서 로컬 파일 시스템 캐시를 자동으로 공유합니다. 이를 통해 다음이 가능해집니다.
+
+- **브랜치 간 캐시 적중**: 한 브랜치에서 수행한 작업을 다른 worktree의 다른 브랜치로 전환했을 때도 활용할 수 있습니다
+- **디스크 사용량 감소**: worktree 사이에서 중복 캐시 항목이 생기는 것을 방지합니다
+- **더 빠른 반복 작업**: 기능 브랜치 사이를 전환할 때 기존 캐시의 이점을 그대로 누릴 수 있습니다
+
+### 작동 방식
+
+Git worktree를 사용하면 같은 저장소에 연결된 여러 작업 디렉터리를 두고, 각각을 서로 다른 브랜치로 체크아웃할 수 있습니다. `git worktree add`로 연결된 worktree를 만들면 Turborepo가 이 구성을 감지하고, 캐시를 메인 worktree의 `.turbo/cache` 디렉터리로 자동 리디렉션합니다.
+
+```bash title="Terminal"
+# 기능 브랜치를 위한 연결된 worktree 만들기
+git worktree add ../my-feature feature-branch
+
+# 연결된 worktree에서 turbo 실행 - 캐시가 메인 worktree와 공유됩니다
+cd ../my-feature
+turbo build
+```
+
+worktree 캐시 공유가 활성화되면 출력에 다음과 같은 메시지가 표시됩니다.
+
+```
+• Remote caching enabled, using shared worktree cache
+```
+
+<Callout type="info">
+  `turbo.json`에 명시적으로 [`cacheDir`](/docs/reference/configuration#cachedir)을
+  설정하면 worktree 캐시 공유가 비활성화되고, 각 worktree는 지정된 자체 캐시
+  디렉터리를 사용합니다.
+</Callout>
+
+### 원격 캐싱과 함께 사용하기
+
+Git worktree 캐시 공유는 [원격 캐싱](/docs/core-concepts/remote-caching)과 함께 동작합니다. 둘 다 활성화되어 있으면:
+
+- **로컬 캐시**는 같은 머신의 worktree 사이에서 공유됩니다
+- **원격 캐시**는 모든 머신과 CI에서 공유됩니다
+
+즉, 하나의 worktree에서 빌드한 작업을 다른 worktree에서 네트워크 요청 없이 공유 로컬 캐시로 즉시 복원할 수 있습니다. 로컬 캐시에 아티팩트가 없다면 Turborepo는 평소처럼 원격 캐시로 폴백합니다.
+
+## 무엇이 캐시되나요?
+
+Turborepo는 두 가지 종류의 출력을 캐시합니다. 바로 작업 출력과 로그입니다.
+
+### 작업 출력
+
+Turborepo는 `turbo.json`의 [`outputs` 키](/docs/reference/configuration#outputs)에 정의된 작업의 파일 출력을 캐시합니다. 캐시 적중이 발생하면 Turborepo는 캐시에서 해당 파일들을 복원합니다.
+
+`outputs` 키는 선택 사항입니다. 이 경우 Turborepo가 어떻게 동작하는지는 [API reference](/docs/reference/configuration#outputs)를 참고하세요.
+
+<Callout type="warn" title="파일 출력 제공">
+작업에 대한 파일 출력을 선언하지 않으면 Turborepo는 그 출력을 캐시하지 않습니다. 일부 작업(예: 린터)에서는 괜찮을 수 있지만, 많은 작업은 실제로 캐시하고 싶은 파일을 생성합니다.
+
+캐시 적중 시 파일을 사용할 수 없다는 오류가 난다면, 해당 작업에 대한 출력을 올바르게 정의했는지 확인하세요.
+
+</Callout>
+
+### 로그
+
+Turborepo는 항상 작업의 터미널 출력을 캡처하고, 작업이 처음 실행됐을 때의 로그를 터미널로 복원합니다.
+
+재생되는 로그의 상세 수준은 [`--output-logs` 플래그](/docs/reference/run#--output-logs-option) 또는 [`outputLogs` configuration option](/docs/reference/configuration#outputlogs)으로 조정할 수 있습니다.
+
+## 작업 입력
+
+입력은 Turborepo에 의해 해시되어 작업 실행을 위한 "지문"을 생성합니다. "지문"이 일치하면 작업을 실행할 때 캐시 적중이 발생합니다.
+
+내부적으로 Turborepo는 두 종류의 해시를 만듭니다. 전역 해시와 작업 해시입니다. 이 둘 중 하나라도 바뀌면 해당 작업은 캐시 누락이 발생합니다.
+
+### 전역 해시 입력
+
+| 입력                                                                                  | 예                                                                                                                                                                                                         |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 루트 `turbo.json`과 패키지 `turbo.json`에서 해석된 작업 정의                          | 루트 `turbo.json` 또는 [`outputs`](/docs/reference/configuration#outputs)가 설정된 [Package Configuration](/docs/reference/package-configurations)을 변경하는 경우                                           |
+| Workspace 루트에 영향을 주는 lockfile 변경                                            | 루트 `package.json`의 의존성을 업데이트하면 **모든** 작업에서 캐시 누락이 발생합니다                                                                                                                        |
+| [`globalDependencies`](/docs/reference/configuration#globaldependencies) 파일 내용     | `globalDependencies`에 포함된 `./.env`를 변경하면 **모든** 작업에서 캐시 누락이 발생합니다                                                                                                                 |
+| [`globalEnv`](/docs/reference/configuration#globalenv)에 나열된 변수의 값             | `globalEnv`에 포함된 `GITHUB_TOKEN`의 값이 바뀌는 경우                                                                                                                                                      |
+| 작업 런타임에 영향을 주는 플래그 값                                                   | `--cache-dir`, `--framework-inference`, `--env-mode`처럼 동작을 바꾸는 플래그를 사용하는 경우                                                                                                              |
+| 임의 전달 인수                                                                         | `turbo build -- --arg=value`는 `turbo build` 또는 `turbo build -- --arg=diff`와 비교할 때 **모든** 작업에서 캐시 누락을 일으키며, 여기에는 `--arg=value`를 받지 않은 `build`의 의존 작업도 포함됩니다 |
+
+### 패키지 해시 입력
+
+| 입력                                                                  | 예                                                      |
+| --------------------------------------------------------------------- | ------------------------------------------------------- |
+| [Package Configuration](/docs/reference/package-configurations) 변경 | 패키지의 `turbo.json`을 변경하는 경우                   |
+| 패키지에 영향을 주는 lockfile 변경                                   | 패키지의 `package.json`에서 의존성을 업데이트하는 경우 |
+| 패키지의 `package.json` 변경                                         | 패키지 `package.json`의 `name` 필드를 업데이트하는 경우 |
+| 파일 변경                                                            | 기본값은 패키지의 모든 파일이며, [`inputs`](/docs/reference/configuration#inputs)로 조정할 수 있습니다 |
+
+## 문제 해결
+
+### 드라이 런 사용하기
+
+Turborepo에는 [`--dry` 플래그](/docs/reference/run#--dry----dry-run)가 있어, 실제로 작업을 실행하지 않고도 작업을 실행하면 무슨 일이 일어날지 확인할 수 있습니다. 어떤 작업이 실행되는지 확신이 없을 때 캐싱 문제를 디버깅하는 데 유용합니다.
+
+자세한 내용은 [`--dry` API reference](/docs/reference/run#--dry----dry-run)를 참고하세요.
+
+### Run Summaries 사용하기
+
+Turborepo에는 작업의 모든 입력, 출력 등을 한눈에 볼 수 있는 [`--summarize` 플래그](/docs/reference/run#--summarize)가 있습니다. 두 개의 요약을 비교하면 두 작업의 해시가 왜 다른지 알 수 있습니다. 이는 다음과 같은 상황에서 유용합니다.
+
+- 입력 디버깅: Turborepo에서 작업 입력은 매우 다양합니다. 캐시 적중이 나야 한다고 생각한 작업에서 캐시 누락이 발생한다면, Run Summary를 사용해 예상과 다르게 바뀐 입력이 무엇인지 확인할 수 있습니다.
+- 출력 디버깅: 캐시 적중이 되었는데도 기대한 파일이 복원되지 않는다면, Run Summary를 통해 캐시에서 어떤 출력이 복원되는지 이해하는 데 도움이 됩니다.
+
+<Callout type="info" title="Summaries viewer">
+  Turborepo에 기본 제공되는 Run Summaries UI 뷰어는 없지만, 커뮤니티가
+  만든 여러 도구를 사용할 수 있습니다:
+
+- [https://turbo.nullvoxpopuli.com](https://turbo.nullvoxpopuli.com) - Run Summaries를 위한 웹 기반 UI 뷰어
+- [`turborepo-summary`](https://github.com/charpeni/turborepo-summary) - Turborepo run summary JSON 출력으로부터 사람이 읽기 쉬운 보고서를 생성합니다
+- [`turborepo-summary-action`](https://github.com/charpeni/turborepo-summary-action) - `turborepo-summary`를 감싸 GitHub Actions Job Summary에 추가하는 GitHub Action입니다
+
+</Callout>
+
+### 캐싱 끄기
+
+때로는 작업 출력을 캐시에 기록하고 싶지 않을 수도 있습니다. 이는 [`"cache": false`](/docs/reference/configuration#cache)로 특정 작업에 영구 적용하거나, [`--cache <options>` 플래그](/docs/reference/run#--no-cache)로 전체 실행에 적용할 수 있습니다.
+
+### 캐시 덮어쓰기
+
+이미 캐시된 작업을 `turbo`가 강제로 다시 실행하게 하려면 [`--force` 플래그](/docs/reference/run#--force)를 사용하세요. 이 플래그는 캐시 **읽기**만 비활성화하며, **쓰기**는 비활성화하지 않습니다.
+
+### 작업 캐싱이 작업 실행보다 느린 경우
+
+캐싱이 오히려 캐싱하지 않는 것보다 느려지는 시나리오를 만들 수도 있습니다. 이런 경우는 드물지만, 예를 들면 다음과 같습니다.
+
+- **작업이 매우 빠르게 실행되는 경우**: 작업 실행 시간이 [원격 캐시](/docs/core-concepts/remote-caching)까지의 네트워크 왕복 시간보다 짧다면, 그 작업은 캐싱하지 않는 편이 나을 수 있습니다.
+- **작업 출력 아티팩트가 매우 큰 경우**: 전체 Docker Container처럼 업로드나 다운로드 시간이 재생성 시간보다 더 오래 걸릴 정도로 큰 아티팩트를 만들 수 있습니다. 이런 경우에는 해당 작업을 캐싱하지 않는 편을 고려해야 합니다.
+- **자체 캐싱을 가진 스크립트인 경우**: 일부 작업은 자체적인 내부 캐싱 동작을 가집니다. 이런 경우 Turborepo 캐시와 애플리케이션 캐시를 함께 동작하게 만들려면 구성이 빠르게 복잡해질 수 있습니다.
+
+이런 상황은 드물지만, 프로젝트의 동작을 테스트해 특정 위치에서 캐싱을 끄는 것이 실제 성능 향상을 주는지 확인해 보는 것이 좋습니다.
+
+## 다음 단계
+
+이제 Turborepo의 캐싱이 저장소를 어떻게 더 빠르게 만드는지 살펴봤으니, 다음으로는 Turborepo에서 애플리케이션과 라이브러리를 개발하는 방법을 알아봅시다.

@@ -1,0 +1,116 @@
+---
+title: Turborepo와 함께 AI 사용
+description: Turborepo에서 AI 코딩 도우미를 최대한 활용하세요.
+product: turborepo
+type: guide
+summary: 에이전트 기술, 작업 설명, 기계 판독 가능 문서와 같은 Turborepo 기능을 사용하여 AI 코딩 도우미 워크플로를 최적화하세요.
+related:
+- /docs/guides/generating-code
+---
+
+import { Callout } from "@/components/geistdocs/callout";
+
+Turborepo는 AI 코딩 도우미와 원활하게 작동하도록 설계되었습니다. Turborepo는 AI가 저장소를 이해하고 보다 효율적으로 작업할 수 있도록 돕는 기능을 제공합니다.
+
+## 에이전트 스킬
+
+[상담원 기술](https://agentskills.io)은 상담원에게 새로운 기능과 전문 지식을 제공하는 개방형 표준입니다. 이는 상담원이 보다 정확하고 효율적으로 작업을 수행하는 데 사용할 수 있는 지침, 스크립트 및 리소스의 폴더입니다.
+
+에이전트에 Turborepo Skill을 추가하여 Turborepo 및 monorepos 전문가로 만들 수 있습니다.
+
+```bash title="Terminal"
+npx skills add vercel/turborepo
+```
+
+스킬은 상담원에게 다음을 가르칩니다.
+
+- Turborepo 구성 모범 사례
+- 모노레포 패턴 및 규칙
+- 피해야 할 안티 패턴
+- 성능 최적화 기술
+
+## 병렬 에이전트를 위한 Git 작업 트리
+
+동일한 저장소에서 여러 AI 에이전트를 병렬로 실행할 때 [Git 작업 트리](https://git-scm.com/docs/git-worktree)는 Git 기록을 공유하면서 각 에이전트가 자체 디렉터리에서 작업할 수 있도록 허용하여 충돌을 방지합니다.
+
+Turborepo는 작업 트리 전체에서 로컬 캐시를 자동으로 공유하므로 에이전트는 서로의 캐시된 작업 결과로부터 이점을 얻습니다.
+
+```bash title="Terminal"
+# 에이전트 1이 캐시를 생성합니다.turbo run build
+
+# 에이전트 2에 대한 작업 트리 만들기git branch feature-branch && git worktree add ../agent-2-worktree feature-branch
+
+# 에이전트 2는 에이전트 1의 작업으로 인해 캐시 적중을 받습니다.cd ../agent-2-worktree && turbo run build
+```
+
+[원격 캐싱](/docs/core-concepts/remote-caching)과 결합하면 동시에 작동하는 여러 에이전트 간에 빠른 피드백 루프가 가능해집니다.
+
+## 작업 설명
+
+`turbo.json`의 작업 정의에 `description` 필드를 추가하면 AI 도구가 각 작업의 기능을 이해할 수 있습니다.
+
+```json title="turbo.json"
+{
+  "tasks": {
+    "build": {
+      "description": "Compiles TypeScript and bundles the application",
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "test": {
+      "description": "Runs the test suite with coverage",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "description": "Checks code style and catches common errors"
+    }
+  }
+}
+```
+
+설명은 AI 보조자에게 도움이 됩니다.
+
+- **저장소 이해**: AI는 구현 세부 정보를 읽지 않고도 각 작업이 수행하는 작업을 빠르게 파악할 수 있습니다.
+- **더 나은 제안 제공**: AI는 작업 목적에 대한 맥락을 바탕으로 보다 관련성이 높은 추천을 제공할 수 있습니다.
+- **빠른 온보딩**: 새로운 팀 구성원(사람 또는 AI)이 빌드 시스템을 한눈에 이해할 수 있습니다.
+
+## 문서 검색 중
+
+`turbo docs` 명령을 사용하면 터미널에서 직접 Turborepo 문서를 검색할 수 있습니다.
+
+```bash title="Terminal"
+turbo docs "package configurations"
+```
+
+결과는 설치된 `turbo` 버전과 일치하는 버전 문서에 대한 링크를 제공하므로 설정에 대한 정확한 정보를 얻을 수 있습니다.
+
+이는 쉘 명령을 실행할 수 있는 AI 도우미와 작업할 때 특히 유용합니다. 웹을 검색하는 대신 정확한 문서 링크를 직접 얻을 수 있습니다.
+
+## 기계가 읽을 수 있는 문서
+
+Turborepo의 문서 사이트는 여러 가지 방법으로 AI 소비에 최적화되어 있습니다.
+
+### 마크다운 응답
+
+적절한 헤더가 있는 문서를 가져올 때 사이트는 HTML 대신 Markdown을 반환하여 AI의 컨텍스트 창을 유지합니다.
+
+```bash title="Terminal"
+curl -sL -H "Accept: text/markdown" https://turborepo.dev/docs
+```
+
+### 직접 마크다운 경로
+
+Markdown 버전을 얻으려면 문서 URL에 `.md`을 추가하세요.
+
+- `https://turborepo.dev/docs.md`
+- `https://turborepo.dev/docs/crafting-your-repository/caching.md`
+
+### 기계 판독 가능 사이트맵
+
+`https://turborepo.dev/sitemap.md`에 사이트맵이 제공되어 상담원이 어떤 문서가 있는지 확인할 수 있습니다.
+
+### 버전이 지정된 문서
+
+특정 Turborepo 버전에 대한 문서는 하위 도메인에서 사용할 수 있습니다. 예를 들어, 2.7.6 문서는 `https://v2-7-6.turborepo.dev/docs`에 있습니다.
+
+이는 AI가 정확한 Turborepo 버전과 일치하는 문서를 참조해야 할 때 유용합니다.

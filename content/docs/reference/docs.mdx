@@ -1,0 +1,53 @@
+---
+title: 문서
+description: '`turbo docs` 명령에 대한 API 참조'
+product: turborepo
+type: reference
+summary: CLI에서 Turborepo 문서를 검색하는 `turbo docs` 명령에 대한 참조입니다.
+---
+
+명령줄에서 직접 Turborepo 문서를 검색하세요.
+
+```bash title="Terminal"
+turbo docs <query>
+```
+
+## 사용법
+
+`docs` 명령은 Turborepo 문서를 검색하고 일치하는 페이지를 반환합니다.
+
+```bash title="Terminal"
+turbo docs "caching"
+```
+
+예제 출력:
+
+```txt title="Terminal"
+Found 5 results for 'caching':
+
+1. Caching: https://v2-7-5.turborepo.dev/docs/core-concepts/caching
+
+2. Remote Caching: https://v2-7-5.turborepo.dev/docs/core-concepts/remote-caching
+
+3. Caching Tasks: https://v2-7-5.turborepo.dev/docs/crafting-your-repository/caching
+
+4. Local Caching: https://v2-7-5.turborepo.dev/docs/core-concepts/local-caching
+
+5. Cache Troubleshooting: https://v2-7-5.turborepo.dev/docs/troubleshooting/cache-issues
+```
+
+설치된 `turbo` 버전과 일치하는 버전이 지정된 설명서 사이트에 대한 결과 링크입니다.
+
+## 옵션
+
+### `--docs-version`
+
+검색하려면 문서 버전을 재정의하세요. 기본적으로 `turbo docs`은 사용자가 설치한 `turbo` 버전을 사용합니다.
+
+```bash title="Terminal"
+turbo docs "task dependencies" --docs-version 2.8.0
+```
+
+## 최소 버전
+
+지원되는 최소 버전은 **2.7.5**입니다.

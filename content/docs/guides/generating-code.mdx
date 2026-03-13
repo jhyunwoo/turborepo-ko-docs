@@ -1,0 +1,330 @@
+---
+title: 코드 생성 중
+description: Turborepo를 사용하여 코드를 생성하는 방법을 알아보세요.
+product: turborepo
+type: guide
+summary: Turborepo의 내장 생성기와 사용자 정의 Plop 구성을 사용하여 새 패키지와 코드를 스캐폴딩하세요.
+related:
+- /docs/guides/publishing-libraries
+---
+
+모노레포를 패키지로 분할하는 것은 코드를 구성하고 작업 속도를 높이며 로컬 개발을 개선하는 좋은 방법입니다.
+경험. Turborepo의 코드 생성을 사용하면 패키지, 모듈에 대한 새로운 소스 코드를 쉽게 생성할 수 있습니다.
+나머지 저장소와 통합되는 구조화된 방식의 개별 UI 구성 요소도 있습니다.
+
+## 빈 패키지 추가
+
+모노레포에 비어 있는 새 앱이나 패키지를 추가합니다.
+
+```sh title="Terminal"
+turbo gen workspace
+```
+
+`gen workspace`에 사용 가능한 모든 [옵션](/docs/reference/generate#workspace)을 확인하세요.
+
+## 기존 패키지 복사
+
+기존 작업 영역을 새 앱이나 패키지의 템플릿으로 사용할 수 있습니다. 이는 기존 모노레포 내의 두 작업공간 모두에서 작동합니다.
+다른 리포지토리의 원격 작업 공간(GitHub URL을 통해 지정)
+
+### 예
+
+리포지토리의 기존 패키지에서 복사하여 모노리포에 새 패키지를 만듭니다.
+
+```sh title="Terminal"
+turbo gen workspace --copy
+```
+
+원격 패키지에서 복사하여 모노레포에 새 작업 영역을 만듭니다.
+
+```sh title="Terminal"
+turbo gen workspace --copy https://github.com/vercel/turborepo/tree/main/examples/with-tailwind/packages/tailwind-config
+```
+
+<Callout type="info">
+  **참고**: 원격 소스에서 추가할 때 Turborepo는 저장소에 필요한 모든 종속성이 있는지 확인할 수 없으며 올바른 패키지 관리자를 사용하고 있습니다. 이 경우 새 작업공간이 저장소 내에서 예상대로 작동하도록 하려면 일부 수동 수정이 필요할 수 있습니다.
+
+</Callout>
+
+`gen workspace --copy`에 사용 가능한 모든 [옵션](/docs/reference/generate#workspace)을 확인하세요.
+
+## 맞춤형 생성기
+
+내장된 생성기가 요구 사항에 맞지 않는 경우 [Plop](https://plopjs.com/) 구성을 사용하여 나만의 사용자 지정 생성기를 만들 수 있습니다.
+Turborepo는 저장소 내의 모든 생성기 구성을 자동으로 감지하여 명령줄에서 실행할 수 있도록 합니다.
+
+<Callout type="info">
+  Turborepo Generator는 Plop 위에 구축되지만 `plop`이 필요하지 않습니다.
+ 저장소에 종속성으로 설치됩니다.
+</Callout>
+
+Turborepo는 모든 Plop 구성 옵션과 기능을 이해하지만 쓰기 경험을 향상시키기 위한 몇 가지 추가 기능을 제공합니다.
+Turborepo로 구성된 저장소 내의 생성기.
+
+1. 생성기는 작업공간별로 자동으로 검색, 로드 및 구성됩니다(단일 구성 파일 내에서 수동으로 `load`할 필요 없음).
+2. 생성기는 정의된 작업공간의 루트에서 자동으로 실행됩니다.
+3. 생성기는 저장소 내 어디에서나(또는 [`--root`](/docs/reference/generate#--root-path) 플래그를 통해 저장소 외부) 호출할 수 있습니다.
+4. TypeScript 생성기는 제로 구성으로 지원됩니다.
+5. `plop`은 저장소의 종속 항목으로 설치될 필요가 없습니다.
+
+<Callout type="info" title="알려진 문제">
+  ESM 종속성은 현재 사용자 정의 생성기 내에서 지원되지 않습니다.
+</Callout>
+
+### 시작하기
+
+사용자 정의 생성기를 빌드하고 실행하려면 Turborepo를 사용하여 모노레포 내 어디에서나 다음 명령을 실행하세요.
+
+```sh title="Terminal"
+turbo gen
+```
+
+기존 생성기를 선택하거나 아직 생성기가 없는 경우 생성하라는 메시지가 표시됩니다. 구성을 생성할 수도 있습니다.
+저장소 루트의 `turbo/generators/config.ts`(또는 `config.js`)에서 수동으로 또는 _모든_ 작업 공간 내에서.
+
+<Callout type="info">
+  TypeScript를 사용하는 경우 [`@turbo/gen`을 설치해야 합니다.
+ 패키지](https://github.com/vercel/turborepo/tree/main/packages/turbo-gen)
+ a `devDependency` 필수 TS 유형에 액세스합니다.
+</Callout>
+
+예를 들어 다음은 생성기를 위한 세 개의 위치가 있는 모노레포를 보여줍니다.
+
+<PackageManagerTabs>
+
+<Tab value="pnpm">
+  <Files>
+    <Folder name="앱" defaultOpen>
+      <Folder name="문서">
+        <File name="패키지.json" />
+      </Folder>
+      <Folder name="편물" defaultOpen>
+        <File name="패키지.json" />
+        <Folder name="터보" green defaultOpen>
+          <Folder name="발전기">
+            <File name="config.ts" />
+            <File name="템플릿" />
+          </Folder>
+        </Folder>
+      </Folder>
+    </Folder>
+    <Folder name="패키지" defaultOpen>
+      <Folder name="UI" defaultOpen>
+        <File name="패키지.json" />
+        <Folder name="터보" green defaultOpen>
+          <Folder name="발전기">
+            <File name="config.ts" />
+            <File name="템플릿" />
+          </Folder>
+        </Folder>
+      </Folder>
+    </Folder>
+    <Folder name="터보" green defaultOpen>
+      <Folder name="발전기">
+        <File name="config.ts" />
+        <File name="템플릿" />
+      </Folder>
+    </Folder>
+    <File name="패키지.json" />
+    <File name="패키지-lock.yaml" />
+    <File name="pnpm-workspace.yaml" />
+    <File name="터보.json" />
+  </Files>
+</Tab>
+
+<Tab value="yarn">
+  <Files>
+    <Folder name="앱" defaultOpen>
+      <Folder name="문서">
+        <File name="패키지.json" />
+      </Folder>
+      <Folder name="편물" defaultOpen>
+        <File name="패키지.json" />
+        <Folder name="터보" green defaultOpen>
+          <Folder name="발전기">
+            <File name="config.ts" />
+            <File name="템플릿" />
+          </Folder>
+        </Folder>
+      </Folder>
+    </Folder>
+    <Folder name="패키지" defaultOpen>
+      <Folder name="UI" defaultOpen>
+        <File name="패키지.json" />
+        <Folder name="터보" green defaultOpen>
+          <Folder name="발전기">
+            <File name="config.ts" />
+            <File name="템플릿" />
+          </Folder>
+        </Folder>
+      </Folder>
+    </Folder>
+    <Folder name="터보" green defaultOpen>
+      <Folder name="발전기">
+        <File name="config.ts" />
+        <File name="템플릿" />
+      </Folder>
+    </Folder>
+    <File name="패키지.json" />
+    <File name="원사.자물쇠" />
+    <File name="터보.json" />
+  </Files>
+</Tab>
+
+<Tab value="npm">
+  <Files>
+    <Folder name="앱" defaultOpen>
+      <Folder name="문서">
+        <File name="패키지.json" />
+      </Folder>
+      <Folder name="편물" defaultOpen>
+        <File name="패키지.json" />
+        <Folder name="터보" green defaultOpen>
+          <Folder name="발전기">
+            <File name="config.ts" />
+            <File name="템플릿" />
+          </Folder>
+        </Folder>
+      </Folder>
+    </Folder>
+    <Folder name="패키지" defaultOpen>
+      <Folder name="UI" defaultOpen>
+        <File name="패키지.json" />
+        <Folder name="터보" green defaultOpen>
+          <Folder name="발전기">
+            <File name="config.ts" />
+            <File name="템플릿" />
+          </Folder>
+        </Folder>
+      </Folder>
+    </Folder>
+    <Folder name="터보" green defaultOpen>
+      <Folder name="발전기">
+        <File name="config.ts" />
+        <File name="템플릿" />
+      </Folder>
+    </Folder>
+    <File name="패키지.json" />
+    <File name="패키지-lock.json" />
+    <File name="터보.json" />
+  </Files>
+</Tab>
+
+<Tab value="bun">
+  <Files>
+    <Folder name="앱" defaultOpen>
+      <Folder name="문서">
+        <File name="패키지.json" />
+      </Folder>
+      <Folder name="편물" defaultOpen>
+        <File name="패키지.json" />
+        <Folder name="터보" green defaultOpen>
+          <Folder name="발전기">
+            <File name="config.ts" />
+            <File name="템플릿" />
+          </Folder>
+        </Folder>
+      </Folder>
+    </Folder>
+    <Folder name="패키지" defaultOpen>
+      <Folder name="UI" defaultOpen>
+        <File name="패키지.json" />
+        <Folder name="터보" green defaultOpen>
+          <Folder name="발전기">
+            <File name="config.ts" />
+            <File name="템플릿" />
+          </Folder>
+        </Folder>
+      </Folder>
+    </Folder>
+    <Folder name="터보" green defaultOpen>
+      <Folder name="발전기">
+        <File name="config.ts" />
+        <File name="템플릿" />
+      </Folder>
+    </Folder>
+    <File name="패키지.json" />
+    <File name="롤빵.자물쇠" />
+    <File name="터보.json" />
+  </Files>
+</Tab>
+</PackageManagerTabs>
+
+작업공간 내에서 생성된 생성기는 저장소 루트나 생성기 구성 위치가 **아님** 작업공간 루트에서 자동으로 실행됩니다.
+
+이렇게 하면 생성기를 작성하기가 더 간단해집니다. `[workspace-root]`에서 파일을 생성하려면 `../../<file>`이 아닌 `<file>`으로 지정하면 됩니다.
+
+[Plop을 사용하여 사용자 정의 생성기 생성](https://plopjs.com/documentation/#creating-a-generator)에 대해 자세히 알아보세요.
+
+### 생성기 작성
+
+생성기 구성 파일은 [Plop](https://plopjs.com/) 구성 객체를 반환하는 함수입니다. 구성 객체는
+생성기의 프롬프트와 작업을 정의하는 데 사용됩니다.
+
+가장 간단한 형태의 생성기 구성 파일은 다음과 같습니다.
+
+```ts title="turbo/generators/config.ts"
+import type { PlopTypes } from "@turbo/gen";
+
+export default function generator(plop: PlopTypes.NodePlopAPI): void {
+  // 생성기를 생성하다  plop.setGenerator("Generator name", {
+    description: "Generator description",
+    // 사용자로부터 정보를 수집하다    prompts: [
+      ...
+    ],
+    // 프롬프트에 따라 작업 수행    actions: [
+      ...
+    ],
+  });
+}
+```
+
+#### 프롬프트
+
+프롬프트는 [Plop 프롬프트](https://plopjs.com/documentation/#using-prompts)를 사용하여 작성되며 사용자로부터 정보를 수집하는 데 사용됩니다.
+
+#### 작업
+
+작업은 [내장된 Plop 작업](https://plopjs.com/documentation/#built-in-actions) 또는 사용자가 직접 정의한 [맞춤 작업 함수](https://plopjs.com/documentation/#functionsignature-custom-action)를 사용할 수 있습니다.
+
+```ts title="turbo/generators/config.ts"
+import type { PlopTypes } from "@turbo/gen";
+
+const customAction: PlopTypes.CustomActionFunction = async (answers) => {
+  // 원격 API에서 데이터 가져오기  const results = await fetchRemoteData();
+  // 답변에 응답을 추가하여 이 데이터를 작업에 사용할 수 있도록 합니다.  answers.results = results;
+  // 상태 문자열을 반환  return 'Finished data fetching!';
+}
+
+export default function generator(plop: PlopTypes.NodePlopAPI): void {
+  // 생성기를 생성하다  plop.setGenerator("Generator name", {
+    description: "Generator description",
+    prompts: [
+      ...
+    ],
+    actions: [
+      customAction
+      {/* actions now have access to `answers.results` */}
+      ...
+    ],
+  });
+}
+```
+
+### 발전기 실행
+
+생성기 구성 파일을 생성한 후에는 선택 프롬프트를 건너뛰고 다음을 사용하여 지정된 생성기를 직접 실행할 수 있습니다.
+
+```sh title="Terminal"
+turbo gen [generator-name]
+```
+
+`--args`을 사용하여 인수를 생성기 프롬프트에 직접 전달할 수도 있습니다.
+
+```sh title="Terminal"
+turbo gen [generator-name] --args answer1 answer2 ...
+```
+
+자세한 내용은 Plop 문서의 [프롬프트 우회](https://plopjs.com/documentation/#bypassing-prompts)를 참조하세요.
+
+`gen`에 사용 가능한 모든 [옵션](/docs/reference/generate#run-generator-name)을 확인하세요.

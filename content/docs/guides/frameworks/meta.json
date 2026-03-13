@@ -1,0 +1,9 @@
+{
+  "pages": [
+    "nextjs",
+    "sveltekit",
+    "vite",
+    "nuxt",
+    "framework-bindings"
+  ]
+}

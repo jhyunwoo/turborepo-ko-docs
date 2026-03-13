@@ -1,0 +1,402 @@
+---
+title: Vitest
+description: 모노레포에서 Vitest를 사용하는 방법을 알아보세요.
+product: turborepo
+type: integration
+summary: 선택적 병합 적용 범위를 갖춘 모노레포 패키지 전반에 걸쳐 캐시되고 병렬화된 테스트를 위해 Vitest를 구성합니다.
+prerequisites:
+- /docs/crafting-your-repository/configuring-tasks
+related:
+- /docs/guides/tools/jest
+- /docs/guides/tools/playwright
+- /docs/guides/tools/typescript
+---
+
+[Vitest](https://vitest.dev/)는 Vite 생태계의 테스트 실행자입니다. Turborepo와 통합하면 엄청난 속도 향상이 가능합니다.
+
+[Vitest 문서](https://vitest.dev/guide/workspace)는 하나의 루트 명령으로 모노레포의 모든 테스트를 실행하는 "Vitest 프로젝트" 구성을 생성하여 즉시 병합된 적용 범위 보고서와 같은 동작을 활성화하는 방법을 보여줍니다. 이 기능은 Jest([패키지 관리자 작업공간](/docs/crafting-your-repository/structuring-a-repository) 이전에 작업공간 기능이 구축됨)과의 호환성을 위해 설계되었기 때문에 단일 저장소에 대한 최신 모범 사례를 따르지 않습니다.
+
+<Callout type="warn">
+  Vitest는 프로젝트를 위해 작업공간을 더 이상 사용하지 않습니다. 프로젝트를 사용할 때,
+ 개별 프로젝트 vitest 구성은 이후 더 이상 루트 구성을 확장할 수 없습니다.
+ 프로젝트 구성을 상속합니다. 대신 별도의 공유 파일
+ `vitest.shared.ts` 같은 것이 필요합니다.
+</Callout>
+
+이로 인해 각각 장단점이 있는 두 가지 옵션이 있습니다.
+
+- [캐싱을 위해 Turborepo 활용](#leveraging-turborepo-for-caching)
+- [Vitest의 프로젝트 기능 사용하기](#using-vitests-projects-feature)
+
+### 캐싱을 위해 Turborepo 활용
+
+캐시 적중률을 향상시키고 변경 사항이 있는 테스트만 실행하려면 Vitest 명령을 각 패키지에서 별도의 캐시 가능한 스크립트로 분할하여 패키지별 작업을 구성하도록 선택할 수 있습니다. 이 속도는 병합된 적용 범위 보고서를 직접 작성해야 하는 절충안을 제공합니다.
+
+<Callout type="info">
+  전체 예를 보려면 `npx create-turbo@latest --example with-vitest`을 실행하거나
+ [예제 소스 방문
+ 코드](https://github.com/vercel/turborepo/tree/main/examples/with-vitest).
+</Callout>
+
+#### 설정 중
+
+다음과 같은 간단한 [패키지 관리자 작업공간](/docs/crafting-your-repository/structuring-a-repository)이 있다고 가정해 보겠습니다.
+
+<Files>
+  <Folder name="apps" defaultOpen>
+    <Folder name="web" defaultOpen>
+      <File name="package.json" />
+    </Folder>
+  </Folder>
+  <Folder name="packages" defaultOpen>
+    <Folder name="ui" defaultOpen>
+      <File name="package.json" />
+    </Folder>
+  </Folder>
+</Files>
+
+`apps/web` 및 `packages/ui` 둘 다 자체 테스트 모음이 있으며 `vitest` [이를 사용하는 패키지에 설치](/docs/crafting-your-repository/managing-dependencies#install-dependencies-where-theyre-used). `package.json` 파일에는 Vitest를 실행하는 `test` 스크립트가 포함되어 있습니다.
+
+```json title="./apps/web/package.json"
+{
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "latest"
+  }
+}
+```
+
+`turbo.json` 루트 내에서 `test` 작업을 만듭니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "test": {
+      "dependsOn": ["transit"]
+    },
+    "transit": {
+      "dependsOn": ["^transit"]
+    }
+  }
+}
+```
+
+이제 `turbo run test`은 변경된 테스트 코드만 포함하여 각 패키지의 모든 테스트 스위트를 병렬화하고 캐시할 수 있습니다.
+
+#### 감시 모드에서 테스트 실행
+
+CI에서 테스트 스위트를 실행하면 결과가 기록되고 결국 완료되면 종료됩니다. 즉, [Turborepo를 사용하여 캐시](/docs/crafting-your-repository/caching)할 수 있습니다. 그러나 개발 중에 Vitest의 감시 모드를 사용하여 테스트를 실행하면 프로세스가 종료되지 않습니다. 이는 감시 작업을 [장기 실행 개발 작업](/docs/crafting-your-repository/developing-applications)에 더 가깝게 만듭니다.
+
+이러한 차이로 인해 **두 개의 별도 Turborepo 작업**을 지정하는 것이 좋습니다. 하나는 테스트 실행용이고 다른 하나는 감시 모드에서 실행용입니다.
+
+<Callout type="info">
+  아래 전략은 두 가지 작업을 생성합니다. 하나는 지역 개발을 위한 것이고 다른 하나는
+ CI. 로컬 개발을 위해 `test` 작업을 만들고 생성하도록 선택할 수 있습니다.
+ 대신 `test:ci` 작업을 수행하세요.
+</Callout>
+
+예를 들어 각 작업공간의 `package.json` 파일 내부에서는 다음과 같습니다.
+
+```json title="./apps/web/package.json"
+{
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest --watch"
+  }
+}
+```
+
+그리고 루트 `turbo.json` 내부에서는 다음과 같습니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "test": {
+      "dependsOn": ["^test"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
+```
+
+이제 `turbo run test:watch`으로 [global `turbo`](/docs/getting-started/installation#global-installation)을 사용하거나 루트 `package.json`의 스크립트에서 작업을 실행할 수 있습니다.
+
+<Tabs items={["Global turbo", "./package.json"]}>
+<Tab value="Global turbo">
+
+```bash title="Terminal"
+turbo run test
+
+turbo run test:watch
+```
+
+</Tab>
+
+<Tab value="./package.json">
+
+```json title="./package.json"
+{
+  "scripts": {
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch"
+  }
+}
+```
+
+</Tab>
+
+</Tabs>
+
+#### 병합된 적용 범위 보고서 만들기
+
+[Vitest의 프로젝트 기능](#using-vitests-projects-feature)은 모든 패키지의 테스트 커버리지 보고서를 병합하는 즉시 사용 가능한 커버리지 보고서를 생성합니다. 하지만 Turborepo 전략에 따라 범위 보고서를 직접 병합해야 합니다.
+
+<Callout type="info">
+  [`with-vitest`
+ 예](https://github.com/vercel/turborepo/tree/main/examples/with-vitest)
+ 귀하의 필요에 맞게 조정할 수 있는 완전한 예를 보여줍니다. 당신은 얻을 수 있습니다
+ `npx create-turbo@latest --example with-vitest`을 사용하여 빠르게 시작했습니다.
+</Callout>
+
+이렇게 하려면 다음과 같은 몇 가지 일반적인 단계를 따르세요.
+
+1. `turbo run test`을 실행하여 적용 범위 보고서를 만듭니다.
+2. [`nyc merge`](https://github.com/istanbuljs/nyc?tab=readme-ov-file#what-about-nyc-merge)을 사용하여 적용 범위 보고서를 병합합니다.
+3. `nyc report`을 사용하여 보고서를 만듭니다.
+
+달성해야 할 Turborepo 작업은 다음과 같습니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "test": {
+      "dependsOn": ["^test", "@repo/vitest-config#build"],
+      "outputs": ["coverage.json"]
+    },
+    "merge-json-reports": {
+      "inputs": ["coverage/raw/**"],
+      "outputs": ["coverage/merged/**"]
+    },
+    "report": {
+      "dependsOn": ["merge-json-reports"],
+      "inputs": ["coverage/merge"],
+      "outputs": ["coverage/report/**"]
+    }
+  }
+}
+```
+
+이 위치에서 `turbo test && turbo report`을 실행하여 병합된 적용 범위 보고서를 만듭니다.
+
+### Vitest의 프로젝트 기능 사용하기
+
+Vitest 프로젝트 기능은 [패키지 관리자 작업공간](/docs/crafting-your-repository/structuring-a-repository)과 동일한 모델을 따르지 않습니다. 대신 단일 명령으로 여러 프로젝트에서 테스트를 검색하고 실행하는 루트 구성을 사용합니다.
+
+#### 루트 구성 동작
+
+프로젝트를 사용할 때 루트 `vitest.config.ts`은 `projects` 배열을 통해 포함할 프로젝트를 정의하는 진입점 역할을 합니다. 각 프로젝트에는 루트 설정을 확장하거나 재정의하는 자체 구성이 있을 수 있습니다.
+
+```ts title="./vitest.config.ts"
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    // 루트 수준 구성은 모든 프로젝트에 적용됩니다.    globals: true,
+    environment: "jsdom",
+  },
+  projects: [
+    {
+      name: "web",
+      root: "./apps/web",
+      test: {
+        // 프로젝트별 구성        include: ["src/**/*.test.ts"],
+      },
+    },
+    {
+      name: "ui",
+      root: "./packages/ui",
+      test: {
+        include: ["src/**/*.spec.ts"],
+      },
+    },
+  ],
+});
+```
+
+**중요:** `projects` 배열의 ​​프로젝트 수준 구성은 루트 구성의 `test` 개체를 직접 확장할 수 없습니다. 대신 다음을 통해 구성을 공유하세요.
+
+1. 프로젝트에서 가져오는 공유 구성 파일 만들기
+2. TypeScript를 사용하여 프로젝트가 해당 설정으로 확산되는 구성 개체를 내보냅니다.
+
+<Callout type="info">
+  이러한 분리를 통해 가져오기를 통해 공통 설정을 공유하면서 각 프로젝트를 독립적으로 구성할 수 있습니다.
+</Callout>
+
+이 모델에는 최신 JavaScript 생태계 관점에서 패키지 경계가 없습니다. 이는 Turborepo가 ​​해당 패키지 경계에 의존하기 때문에 Turborepo의 캐싱에 의존할 수 없음을 의미합니다.
+
+따라서 Turborepo를 사용하여 테스트를 실행하려면 [루트 작업](/docs/crafting-your-repository/configuring-tasks#registering-root-tasks)을 사용해야 합니다. [Vitest 프로젝트 설정](https://vitest.dev/guide/workspace)을 구성한 후 Turborepo용 루트 작업을 생성합니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "//#test": {
+      "outputs": ["coverage/**"]
+    },
+    "//#test:watch": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
+```
+
+**특히 루트 작업에 대한 파일 입력에는 기본적으로 모든 패키지가 포함되므로 패키지를 변경하면 캐시 누락이 발생합니다.** 이렇게 하면 병합된 적용 범위 보고서를 생성하기 위한 단순화된 구성이 가능하지만 반복 작업을 캐시할 기회를 놓치게 됩니다.
+
+#### 특정 프로젝트 실행
+
+Vitest의 프로젝트 기능을 사용할 때 `--project`(또는 `-p`) CLI 플래그를 사용하여 특정 프로젝트에 대한 테스트를 실행할 수 있습니다.
+
+```bash title="Terminal"
+# 특정 프로젝트에 대한 테스트 실행vitest run --project=web
+
+# 여러 프로젝트에 대한 테스트 실행vitest run --project=web --project=ui
+
+# 특정 프로젝트의 감시 모드vitest --watch --project=web
+```
+
+이는 전체 모노레포의 테스트 스위트에 영향을 주지 않고 특정 패키지에 대해서만 테스트를 실행하려는 경우에 유용합니다.
+
+### 하이브리드 접근 방식 사용
+
+하이브리드 솔루션을 구현하면 두 접근 방식의 이점을 결합할 수 있습니다. 이 접근 방식은 CI에서 Turborepo의 캐싱을 유지하면서 Vitest의 프로젝트 기능을 사용하여 로컬 개발을 통합합니다. 이는 저장소에서 약간 더 많은 구성과 혼합 작업 실행 모델을 절충하여 발생합니다.
+
+개별 프로젝트는 프로젝트 사용 시 루트 구성을 확장할 수 없으므로 먼저 공유 구성 패키지를 만듭니다. 공유 Vitest 구성을 위한 새 패키지를 만듭니다.
+
+```json title="./packages/vitest-config/package.json"
+{
+  "name": "@repo/vitest-config",
+  "version": "0.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "vitest": "latest"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "latest"
+  }
+}
+```
+
+```json title="./packages/vitest-config/tsconfig.json"
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"]
+}
+```
+
+```ts title="./packages/vitest-config/src/index.ts"
+export const sharedConfig = {
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+    // 기타 공유 구성  },
+};
+```
+
+그런 다음 프로젝트를 사용하여 루트 Vitest 구성을 만듭니다.
+
+```ts title="./vitest.config.ts"
+import { defineConfig } from "vitest/config";
+import { sharedConfig } from "@repo/vitest-config";
+
+export default defineConfig({
+  ...sharedConfig,
+  projects: [
+    {
+      name: "packages",
+      root: "./packages/*",
+      test: {
+        ...sharedConfig.test,
+        // 프로젝트별 구성      },
+    },
+  ],
+});
+```
+
+이 설정에서 패키지는 공유 구성을 가져오는 개별 Vitest 구성을 유지합니다. 먼저 공유 구성 패키지를 설치합니다.
+
+```json title="./packages/ui/package.json"
+{
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest --watch"
+  },
+  "devDependencies": {
+    "@repo/vitest-config": "workspace:*",
+    "vitest": "latest"
+  }
+}
+```
+
+그런 다음 Vitest 구성을 만듭니다.
+
+```ts title="./packages/ui/vitest.config.ts"
+import { defineConfig } from "vitest/config";
+import { sharedConfig } from "@repo/vitest-config";
+
+export default defineConfig({
+  ...sharedConfig,
+  test: {
+    ...sharedConfig.test,
+    // 필요한 경우 패키지별 재정의  },
+});
+```
+
+종속성 그래프에 새 구성 패키지를 포함하려면 `turbo.json`을 업데이트하세요.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "test": {
+      "dependsOn": ["^test", "@repo/vitest-config#build"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
+```
+
+루트 `package.json`에는 전 세계적으로 테스트를 실행하기 위한 스크립트가 포함되어 있습니다.
+
+```json title="./package.json"
+{
+  "scripts": {
+    "test:projects": "vitest run",
+    "test:projects:watch": "vitest --watch"
+  }
+}
+```
+
+이 구성을 통해 개발자는 Vitest 프로젝트를 사용하여 원활한 로컬 개발 환경을 위해 루트에서 `pnpm test:projects` 또는 `pnpm test:projects:watch`을 실행할 수 있으며, CI는 패키지 수준 캐싱을 활용하기 위해 계속 `turbo run test`을 사용합니다. **이전 섹션에 설명된 대로 병합된 적용 범위 보고서를 수동으로 처리해야 합니다**.

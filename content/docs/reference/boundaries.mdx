@@ -1,0 +1,106 @@
+---
+title: 경계
+description: '`turbo boundaries` 명령에 대한 API 참조'
+product: turborepo
+type: reference
+summary: 작업공간 종속성 위반을 확인하는 실험적인 `turbo boundaries` 명령에 대한 참조입니다.
+---
+
+import { ExperimentalBadge } from "@/components/geistdocs/experimental-badge";
+
+<ExperimentalBadge>실험적</ExperimentalBadge>
+
+경계는 패키지 관리자 작업 공간 위반을 확인하여 Turborepo 기능이 올바르게 작동하는지 확인합니다.
+
+```bash title="Terminal"
+turbo boundaries
+```
+
+<Callout type="info" title="경계 RFC">
+  이 기능은 실험적이며 [
+ 경계 RFC](https://github.com/vercel/turborepo/discussions/9435).
+</Callout>
+
+이 명령은 두 가지 유형의 위반에 대해 알립니다.
+
+- 패키지 디렉터리 외부에서 파일 가져오기
+- 패키지의 `package.json`에 종속성으로 지정되지 않은 패키지를 가져오는 경우
+
+## 태그
+
+경계에는 패키지에 태그를 추가할 수 있는 기능도 있습니다. 이 태그를 사용하여 규칙을 만들 수 있습니다.
+확인할 경계. 예를 들어 UI 패키지에 `internal` 태그를 추가할 수 있습니다.
+
+```json title="./packages/ui/turbo.json"
+{
+  "tags": ["internal"]
+}
+```
+
+그런 다음 `public` 태그가 있는 패키지가 `internal` 태그가 있는 패키지에 종속될 수 없다는 규칙을 선언합니다.
+
+```json title="./turbo.json"
+{
+  "boundaries": {
+    "tags": {
+      "public": {
+        "dependencies": {
+          "deny": ["internal"]
+        }
+      }
+    }
+  }
+}
+```
+
+또는 `public` 패키지가 다른 `public` 패키지에만 의존하도록 할 수도 있습니다.
+
+```json title="turbo.json"
+{
+  "boundaries": {
+    "tags": {
+      "public": {
+        "dependencies": {
+          "allow": ["public"]
+        }
+      }
+    }
+  }
+}
+```
+
+마찬가지로 태그의 종속 항목, 즉 태그가 있는 패키지를 가져오는 패키지에 대한 제한 사항을 추가할 수 있습니다.
+
+```json title="turbo.json"
+{
+  "boundaries": {
+    "tags": {
+      "private": {
+        "dependents": {
+          "deny": ["public"]
+        }
+      }
+    }
+  }
+}
+```
+
+허용 및 거부 목록의 태그 대신 패키지 이름을 사용할 수도 있습니다.
+
+```json title="turbo.json"
+{
+  "boundaries": {
+    "tags": {
+      "private": {
+        "dependents": {
+          "deny": ["@repo/my-pkg"]
+        }
+      }
+    }
+  }
+}
+```
+
+태그를 사용하면 그래프의 어딘가에서 잘못된 패키지를 가져오지 않도록 할 수 있습니다. 이러한 규칙은
+종속성의 종속성에도 적용되므로 패키지를 가져오면 다른 패키지를 가져오는 경우
+거부된 태그가 있어도 여전히 규칙 위반이 발생합니다.

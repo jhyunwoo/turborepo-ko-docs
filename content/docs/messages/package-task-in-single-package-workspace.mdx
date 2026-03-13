@@ -1,0 +1,40 @@
+---
+title: 단일 패키지 작업 영역 오류의 패키지 작업
+description: 단일 패키지 작업 영역의 패키지 작업 오류에 대해 자세히 알아보세요.
+product: turborepo
+type: troubleshooting
+summary: 단일 패키지 작업 영역에서 패키지 범위 작업 구문을 사용하여 발생하는 오류를 수정하는 방법입니다.
+related:
+- /docs/reference/configuration
+---
+
+## 이 오류가 발생한 이유
+
+단일 패키지 모드에서는 리포지토리에 여러 패키지가 있을 수 없습니다. 따라서 태스크를 선언하면
+지정된 패키지 이름을 사용하는 `turbo.json`은 허용되지 않습니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "app#build": {
+      "cache": true
+    }
+  }
+}
+```
+
+## 솔루션
+
+작업 선언에서 패키지 이름을 제거합니다.
+
+```json title="./turbo.json"
+{
+  "tasks": {
+    "build": {
+      "cache": true
+    }
+  }
+}
+```
+
+또는 여러 패키지를 갖고 싶다면 [저장소에서 작업공간을 지정](/docs/getting-started/add-to-existing-repository)할 수 있습니다.
